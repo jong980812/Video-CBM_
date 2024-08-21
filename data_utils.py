@@ -22,7 +22,9 @@ LABEL_FILES = {"places365":"data/categories_places365_clean.txt",
                "cifar100":"data/cifar100_classes.txt",
                "cub":"data/cub_classes.txt",
                "UCF101":"data/ucf101_classes.txt",
-               "SSV2":"data/ssv2_classes.txt",}
+               "SSV2":"data/ssv2_classes.txt",
+               "mini-SSV2":"data/mini-ssv2_classes.txt",
+               }
 
 def get_resnet_imagenet_preprocess():
     target_mean = [0.485, 0.456, 0.406]
