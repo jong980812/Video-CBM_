@@ -8,15 +8,19 @@
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
-            "program": "/data/jong980812/project/Video-CBM/train_video_cbm.py",
             "console": "integratedTerminal",
+            "module": "torch.distributed.launch",
             "args": [
-                "--data_set","SSV2", // Video
-                "--nb_classes","174",
-                "--concept_set","/data/jong980812/project/Video-CBM/data/concept_sets/ucf101_filtered.txt",
+                "--nproc_per_node", "1",
+                "--master_port", "3333",
+                "/data/jong980812/project/Video-CBM/train_video_cbm.py",
+                "--data_set","UCF101", // Video
+                "--nb_classes","101",
+                "--concept_set","/data/jong980812/project/Video-CBM/data/ucf101_classes.txt",
                 "--batch_size","48",
-                "--video-anno-path","data/video_annotation/ssv2",
-                "--data_path","/local_datasets/something-something/something-something-v2-mp4",
+                "--video-anno-path","data/video_annotation/ucf101",
+                "--data_path","/local_datasets/ucf101/videos",
+                // "--data_path","/local_datasets/something-something/something-something-v2-mp4",
                 "--print",
                 "--activation_dir","debug/activation",
                 "--save_dir","debug/model",
@@ -24,7 +28,7 @@
                 "--n_iters","2000",
                 "--interpretability_cutoff","0.4",
                 "--backbone","vmae_vit_base_patch16_224",
-                "--finetune","/data/datasets/video_checkpoint/ucf101/ucf_pretrain.pth",
+                "--finetune","/data/datasets/video_checkpoint/ucf101/ucf_finetune.pth",
                 "--dual_encoder","internvid",
                 "--lavila_ckpt","/data/datasets/video_checkpoint/lavila_TSF_B.pth"
 

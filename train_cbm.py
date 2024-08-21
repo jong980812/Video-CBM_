@@ -94,7 +94,9 @@ def train_cbm_and_save(args):
         for i, concept in enumerate(concepts):
             if highest[i]<=args.clip_cutoff:
                 print("Deleting {}, CLIP top5:{:.3f}".format(concept, highest[i]))
+        original_n_concept = len(concepts)
     concepts = [concepts[i] for i in range(len(concepts)) if highest[i]>args.clip_cutoff]
+    print(f"Deleting {len(concepts)} Concepts from {original_n_concept}")
     
     #save memory by recalculating
     del clip_features
@@ -162,8 +164,10 @@ def train_cbm_and_save(args):
         for i, concept in enumerate(concepts):
             if sim[i]<=args.interpretability_cutoff:
                 print("Deleting {}, Iterpretability:{:.3f}".format(concept, sim[i]))
-    
+        original_n_concept=len(concepts)
     concepts = [concepts[i] for i in range(len(concepts)) if interpretable[i]]
+    print(f"Deleting {len(concepts)} Concepts from {original_n_concept}")
+    
     
     del clip_features, val_clip_features
     
