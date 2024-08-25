@@ -115,7 +115,35 @@ def build_dataset(is_train, test_mode, args):
             new_width=320,
             args=args)
         nb_classes = 174
+    elif args.data_set == 'mini-SSV2':
+        mode = None
+        anno_path = None
+        if is_train is True:
+            mode = 'train'
+            anno_path = os.path.join(args.video_anno_path, 'train.csv')
+        elif test_mode is True:
+            mode = 'test'
+            anno_path = os.path.join(args.video_anno_path, 'test.csv') 
+        else:  
+            mode = 'validation'
+            anno_path = os.path.join(args.video_anno_path, 'val.csv') 
 
+        dataset = SSVideoClsDataset(
+            anno_path=anno_path,
+            data_path=args.data_path,
+            mode=mode,
+            clip_len=1,
+            num_segment=args.num_frames,
+            test_num_segment=args.test_num_segment,
+            test_num_crop=args.test_num_crop,
+            num_crop=1 if not test_mode else 3,
+            keep_aspect_ratio=True,
+            crop_size=args.input_size,
+            short_side_size=args.short_side_size,
+            new_height=256,
+            new_width=320,
+            args=args)
+        nb_classes = 87
     elif args.data_set == 'UCF101':
         mode = None
         anno_path = None
