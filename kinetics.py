@@ -12,6 +12,7 @@ from torch.utils.data import Dataset
 import video_transforms as video_transforms 
 import volume_transforms as volume_transforms
 
+
 class VideoClsDataset(Dataset):
     """Load your own video classification dataset."""
 
@@ -44,7 +45,7 @@ class VideoClsDataset(Dataset):
             raise ImportError("Unable to import `decord` which is required to read videos.")
 
         import pandas as pd
-        cleaned = pd.read_csv(self.anno_path, header=None, delimiter=' ')
+        cleaned = pd.read_csv(self.anno_path, header=None, delimiter=',')
         self.dataset_samples = list(cleaned.values[:, 0])
         self.label_array = list(cleaned.values[:, 1])
 
@@ -84,7 +85,7 @@ class VideoClsDataset(Dataset):
             args = self.args 
             scale_t = 1
 
-            sample = os.path.join(self.data_path,self.dataset_samples[index]+'.avi')
+            sample = self.dataset_samples[index]
             buffer = self.loadvideo_decord(sample, sample_rate_scale=scale_t) # T H W C
             if len(buffer) == 0:
                 while len(buffer) == 0:
@@ -110,8 +111,7 @@ class VideoClsDataset(Dataset):
             return buffer, self.label_array[index]#, index, {}
 
         elif self.mode == 'validation':
-            
-            sample = os.path.join(self.data_path,self.dataset_samples[index]+'.avi')
+            sample = self.dataset_samples[index]
             buffer = self.loadvideo_decord(sample)
             if len(buffer) == 0:
                 while len(buffer) == 0:
@@ -123,8 +123,7 @@ class VideoClsDataset(Dataset):
             return buffer, self.label_array[index]#, sample.split("/")[-1].split(".")[0]
 
         elif self.mode == 'test':
-            # sample = self.test_dataset[index]
-            sample = os.path.join(self.data_path,self.dataset_samples[index]+'.avi')
+            sample = self.test_dataset[index]
             chunk_nb, split_nb = self.test_seg[index]
             buffer = self.loadvideo_decord(sample)
 
@@ -249,9 +248,9 @@ class VideoClsDataset(Dataset):
             vr.seek(0)
             buffer = vr.get_batch(all_index).asnumpy()
             return buffer
-
+        #! vr에 영상 다읽어서 frame 넣어놓음. 대부분 250frame
         # handle temporal segments
-        converted_len = int(self.clip_len * self.frame_sample_rate)
+        converted_len = int(self.clip_len * self.frame_sample_rate)#64
         seg_len = len(vr) // self.num_segment
 
         all_index = []

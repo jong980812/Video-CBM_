@@ -24,6 +24,7 @@ LABEL_FILES = {"places365":"data/categories_places365_clean.txt",
                "UCF101":"data/ucf101_classes.txt",
                "SSV2":"data/ssv2_classes.txt",
                "mini-SSV2":"data/mini-ssv2_classes.txt",
+               "kinetics400":"data/kinetics400_classes.txt",
                }
 
 def get_resnet_imagenet_preprocess():
@@ -46,6 +47,10 @@ def get_data(dataset_name, preprocess=None,args = None):
     elif dataset_name == "mini-SSV2_train":
         data, _= build_dataset(is_train=True, test_mode=False, args=args)
     elif dataset_name == "mini-SSV2_val":
+        data, _= build_dataset(is_train=False, test_mode=False, args=args)
+    elif dataset_name == "kinetics400_train":
+        data, _= build_dataset(is_train=True, test_mode=False, args=args)
+    elif dataset_name == "kinetics400_val":
         data, _= build_dataset(is_train=False, test_mode=False, args=args)
     elif dataset_name == "cifar100_train":
         data = datasets.CIFAR100(root=os.path.expanduser("~/.cache"), download=True, train=True,

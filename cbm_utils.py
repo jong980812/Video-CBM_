@@ -157,12 +157,18 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
     if not args.dual_encoder =='internvid':
         text = clip.tokenize(["{}".format(word) for word in words]).to(device)
         save_clip_text_features(dual_encoder_model , text, text_save_name, batch_size)
-        save_clip_image_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
+        if not args.saved_features:
+            save_clip_image_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
         
     elif args.dual_encoder =='internvid':
         text = dual_encoder_model.text_encoder.tokenize(words, context_length=32).to(device)
         save_internvid_text_features(dual_encoder_model , text, text_save_name, batch_size)
-        save_internvid_video_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args) if num_tasks==1 else save_internvid_video_features_multinode(model=dual_encoder_model_ddp, model_without_ddp=model_without_ddp,dataset=None,data_loader=data_loader_c, save_name=clip_save_name, batch_size=batch_size, device=device,args=args)
+        if not args.saved_features:
+            save_internvid_video_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args) if num_tasks==1 else save_internvid_video_features_multinode(model=dual_encoder_model_ddp, model_without_ddp=model_without_ddp,dataset=None,data_loader=data_loader_c, save_name=clip_save_name, batch_size=batch_size, device=device,args=args)
+            
+    if args.saved_features:# 이 아래는 saved_feature이면 안해도됌.
+        return
+    
     if target_name.startswith("clip_"):
         save_clip_image_features(target_model, data_t, target_save_name, batch_size, device,args)
     elif target_name.startswith("vmae_"):

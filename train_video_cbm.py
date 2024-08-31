@@ -133,7 +133,7 @@ parser.add_argument('--imagenet_default_mean_and_std', default=True, action='sto
 parser.add_argument('--num_segments', type=int, default= 1)
 parser.add_argument('--num_frames', type=int, default= 16)
 parser.add_argument('--sampling_rate', type=int, default= 4)
-parser.add_argument('--data_set', default='Kinetics-400', choices=['Kinetics-400', 'mini-SSV2','SSV2', 'UCF101', 'HMDB51','image_folder'],
+parser.add_argument('--data_set', default='Kinetics-400', choices=['kinetics400', 'mini-SSV2','SSV2', 'UCF101', 'HMDB51','image_folder'],
                     type=str, help='dataset')
 parser.add_argument('--output_dir', default='',
                     help='path where to save, empty for no saving')
@@ -200,6 +200,7 @@ parser.add_argument('--data_path', default='data/video_annotation/ucf101', type=
 parser.add_argument('--video-anno-path',type=str)
 parser.add_argument('--center_frame',action='store_true')
 parser.add_argument('--no_aug',type=bool,default=False)
+parser.add_argument('--saved_features',action='store_true')
 parser.add_argument('--dual_encoder', default='clip', choices=['clip', 'lavila', 'internvid'],
                     type=str, help='dataset')
 parser.add_argument('--dual_encoder_frames',type=int,default=16)
@@ -216,7 +217,7 @@ def train_cbm_and_save(args):
         os.mkdir(args.save_dir)
     if args.concept_set==None:
         args.concept_set = "data/concept_sets/{}_filtered.txt".format(args.data_set)
-        
+    args.video_anno_path=os.path.join(os.getcwd(),'data/video_annotation',args.data_set)
     similarity_fn = similarity.cos_similarity_cubed_single
     device = torch.device(args.device)
     
@@ -243,7 +244,15 @@ def train_cbm_and_save(args):
                                             args.feature_layer,d_train, args.concept_set, "avg", args.activation_dir)
     val_target_save_name, val_clip_save_name, text_save_name =  cbm_utils.get_save_names(args.clip_name, args.backbone,
                                             args.feature_layer, d_val, args.concept_set, "avg", args.activation_dir)
-        
+    
+    feature_storage = '/data/datasets/videocbm/features'
+    if args.saved_features:
+        target_save_name = os.path.join(feature_storage,args.data_set,args.backbone,target_save_name.split('/')[-1])
+        val_target_save_name = os.path.join(feature_storage,args.data_set,args.backbone,val_target_save_name.split('/')[-1])
+        clip_save_name = os.path.join(feature_storage,args.data_set,args.dual_encoder,clip_save_name.split('/')[-1])
+        val_clip_save_name = os.path.join(feature_storage,args.data_set,args.dual_encoder,val_clip_save_name.split('/')[-1])
+
+    
     #load features
     with torch.no_grad():
         target_features = torch.load(target_save_name, map_location="cpu").float()

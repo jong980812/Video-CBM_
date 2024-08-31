@@ -55,18 +55,18 @@ def build_pretraining_dataset(args):
 
 
 def build_dataset(is_train, test_mode, args):
-    if args.data_set == 'Kinetics-400':
+    if args.data_set == 'kinetics400':
         mode = None
         anno_path = None
         if is_train is True:
             mode = 'train'
-            anno_path = os.path.join(args.data_path, 'train.csv')
+            anno_path = os.path.join(args.video_anno_path, 'train.csv')
         elif test_mode is True:
             mode = 'test'
-            anno_path = os.path.join(args.data_path, 'test.csv') 
+            anno_path = os.path.join(args.video_anno_path, 'kinetics400_test.csv') 
         else:  
             mode = 'validation'
-            anno_path = os.path.join(args.data_path, 'val.csv') 
+            anno_path = os.path.join(args.video_anno_path, 'val.csv') 
 
         dataset = VideoClsDataset(
             anno_path=anno_path,
