@@ -417,34 +417,34 @@ def train_cbm_and_save(args):
         # Solve the GLM path
         output_proj = glm_saga(linear, indexed_train_loader, STEP_SIZE, args.n_iters, ALPHA, epsilon=1, k=1,
                         val_loader=val_loader, do_zero=False, metadata=metadata, n_ex=len(target_features), n_classes = len(classes))
-        W_g = output_proj['path'][0]['weight']
-        b_g = output_proj['path'][0]['bias']
+        # W_g = output_proj['path'][0]['weight']
+        # b_g = output_proj['path'][0]['bias']
         
-        save_name = "{}/{}_cbm_{}".format(args.save_dir, args.data_set, datetime.datetime.now().strftime("%Y_%m_%d_%H_%M"))
-        os.mkdir(save_name)
-        torch.save(train_mean, os.path.join(save_name, "proj_mean.pt"))
-        torch.save(train_std, os.path.join(save_name, "proj_std.pt"))
-        # torch.save(W_c, os.path.join(save_name ,"W_c.pt"))
-        # torch.save(W_g, os.path.join(save_name, "W_g.pt"))
-        # torch.save(b_g, os.path.join(save_name, "b_g.pt"))
+        # save_name = "{}/{}_cbm_{}".format(args.save_dir, args.data_set, datetime.datetime.now().strftime("%Y_%m_%d_%H_%M"))
+        # os.mkdir(save_name)
+        # torch.save(train_mean, os.path.join(save_name, "proj_mean.pt"))
+        # torch.save(train_std, os.path.join(save_name, "proj_std.pt"))
+        # # torch.save(W_c, os.path.join(save_name ,"W_c.pt"))
+        # # torch.save(W_g, os.path.join(save_name, "W_g.pt"))
+        # # torch.save(b_g, os.path.join(save_name, "b_g.pt"))
         
-        with open(os.path.join(save_name, "concepts.txt"), 'w') as f:
-            f.write(concepts[0])
-            for concept in concepts[1:]:
-                f.write('\n'+concept)
+        # with open(os.path.join(save_name, "concepts.txt"), 'w') as f:
+        #     f.write(concepts[0])
+        #     for concept in concepts[1:]:
+        #         f.write('\n'+concept)
         
-        with open(os.path.join(save_name, "args.txt"), 'w') as f:
-            json.dump(args.__dict__, f, indent=2)
+        # with open(os.path.join(save_name, "args.txt"), 'w') as f:
+        #     json.dump(args.__dict__, f, indent=2)
         
-        with open(os.path.join(save_name, "metrics.txt"), 'w') as f:
-            out_dict = {}
-            for key in ('lam', 'lr', 'alpha', 'time'):
-                out_dict[key] = float(output_proj['path'][0][key])
-            out_dict['metrics'] = output_proj['path'][0]['metrics']
-            nnz = (W_g.abs() > 1e-5).sum().item()
-            total = W_g.numel()
-            out_dict['sparsity'] = {"Non-zero weights":nnz, "Total weights":total, "Percentage non-zero":nnz/total}
-            json.dump(out_dict, f, indent=2)
+        # with open(os.path.join(save_name, "metrics.txt"), 'w') as f:
+        #     out_dict = {}
+        #     for key in ('lam', 'lr', 'alpha', 'time'):
+        #         out_dict[key] = float(output_proj['path'][0][key])
+        #     out_dict['metrics'] = output_proj['path'][0]['metrics']
+        #     nnz = (W_g.abs() > 1e-5).sum().item()
+        #     total = W_g.numel()
+        #     out_dict['sparsity'] = {"Non-zero weights":nnz, "Total weights":total, "Percentage non-zero":nnz/total}
+        #     json.dump(out_dict, f, indent=2)
     
 if __name__=='__main__':
     args = parser.parse_args()

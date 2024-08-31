@@ -90,6 +90,7 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
                      concept_set, batch_size, device, pool_mode, save_dir,args=None):
     
     
+
     target_save_name, clip_save_name, text_save_name = get_save_names(clip_name, target_name, 
                                                                     "{}", d_probe, concept_set, 
                                                                       pool_mode, save_dir)
@@ -429,6 +430,7 @@ def get_intervid(args,device):
     assert(type(model_l)==dict and model_l['viclip'] is not None and model_l['tokenizer'] is not None)
     clip, tokenizer = model_l['viclip'], model_l['tokenizer']
     clip = clip.to(device)
+    clip = clip.eval()
     return clip, tokenizer
     
 

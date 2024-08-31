@@ -5,7 +5,7 @@
 #SBATCH --mem-per-gpu=30G
 #SBATCH --time 1-00:00:0
 #SBATCH --partition batch_ce_ugrad
-#SBATCH -w moana-y3
+#SBATCH -w moana-y5
 #SBATCH -o /data/jong980812/project/Video-CBM/results/origin_ssv2/finetune_internvid_ost_spatio_temporal/%A-%x.out
 #SBATCH -e /data/jong980812/project/Video-CBM/results/origin_ssv2/finetune_internvid_ost_spatio_temporal/%A-%x.err
 
@@ -27,4 +27,5 @@ python /data/jong980812/project/Video-CBM/train_video_cbm.py \
 --finetune /data/datasets/video_checkpoint/ssv2/ssv2_finetune.pth \
 --lavila_ckpt /data/datasets/video_checkpoint/lavila_TSF_B.pth \
 --dual_encoder internvid \
---clip_cutoff 0.2
+--clip_cutoff 0.0 \
+--interpretability_cutoff 0.0 \
