@@ -300,6 +300,7 @@ def train_cbm_and_save(args):
     val_clip_features = val_clip_features[:, highest>args.clip_cutoff]
     
     #learn projection layer
+    # explained model feature to concept layer
     proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(concepts),
                                 bias=False).to(args.device)
     opt = torch.optim.Adam(proj_layer.parameters(), lr=1e-3)
@@ -394,13 +395,14 @@ def train_cbm_and_save(args):
     linear.weight.data.zero_()
     linear.bias.data.zero_()
     
-    STEP_SIZE = 0.1
+    STEP_SIZE = 0.05
     ALPHA = 0.99
     metadata = {}
     metadata['max_reg'] = {}
     metadata['max_reg']['nongrouped'] = args.lam
 
     # Solve the GLM path
+    #concept layer to classification
     output_proj = glm_saga(linear, indexed_train_loader, STEP_SIZE, args.n_iters, ALPHA, epsilon=1, k=1,
                     val_loader=val_loader, do_zero=False, metadata=metadata, n_ex=len(target_features), n_classes = len(classes))
     W_g = output_proj['path'][0]['weight']
