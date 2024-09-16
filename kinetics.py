@@ -30,12 +30,14 @@ class VideoClsDataset(Dataset):
         self.new_height = new_height
         self.new_width = new_width
         self.keep_aspect_ratio = keep_aspect_ratio
+        self.center_frame = args.center_frame
         self.num_segment = num_segment
         self.test_num_segment = test_num_segment
         self.num_crop = num_crop
         self.test_num_crop = test_num_crop
         self.args = args
         self.aug = False
+        self.no_aug = args.no_aug
         self.rand_erase = False
         if self.mode in ['train']:
             self.aug = True
@@ -53,13 +55,22 @@ class VideoClsDataset(Dataset):
             pass
 
         elif (mode == 'validation'):
-            self.data_transform = video_transforms.Compose([
-                video_transforms.Resize(self.short_side_size, interpolation='bilinear'),
-                video_transforms.CenterCrop(size=(self.crop_size, self.crop_size)),
-                volume_transforms.ClipToTensor(),
-                video_transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                           std=[0.229, 0.224, 0.225])
-            ])
+            if self.no_aug:
+                self.data_transform = video_transforms.Compose([
+                    video_transforms.Resize(self.short_side_size, interpolation='bilinear'),
+                    video_transforms.CenterCrop(size=(self.crop_size, self.crop_size)),
+                    volume_transforms.ClipToTensor(),
+                    # video_transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                            # std=[0.229, 0.224, 0.225])
+                ])
+            else:    
+                self.data_transform = video_transforms.Compose([
+                    video_transforms.Resize(self.short_side_size, interpolation='bilinear'),
+                    video_transforms.CenterCrop(size=(self.crop_size, self.crop_size)),
+                    volume_transforms.ClipToTensor(),
+                    video_transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                            std=[0.229, 0.224, 0.225])
+                ])
         elif mode == 'test':
             self.data_resize = video_transforms.Compose([
                 video_transforms.Resize(size=(short_side_size), interpolation='bilinear')
@@ -107,7 +118,8 @@ class VideoClsDataset(Dataset):
                 return frame_list, label_list, index_list, {}
             else:
                 buffer = self._aug_frame(buffer, args)
-            
+            if self.center_frame:
+                buffer = buffer[:,self.clip_len//2,:,:]
             return buffer, self.label_array[index]#, index, {}
 
         elif self.mode == 'validation':
@@ -120,6 +132,8 @@ class VideoClsDataset(Dataset):
                     sample = self.dataset_samples[index]
                     buffer = self.loadvideo_decord(sample)
             buffer = self.data_transform(buffer)
+            if self.center_frame:
+                buffer = buffer[:,self.clip_len//2,:,:]
             return buffer, self.label_array[index]#, sample.split("/")[-1].split(".")[0]
 
         elif self.mode == 'test':

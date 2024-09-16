@@ -479,7 +479,7 @@ def save_internvid_video_features_multinode(model=None,model_without_ddp=None, d
 def save_internvid_video_features(model, dataset, save_name, batch_size=1000 , device = "cuda",args = None):
     _make_save_dir(save_name)
     all_features = []
-    
+    all_labels = []
     if os.path.exists(save_name):
         return
     
@@ -487,15 +487,21 @@ def save_internvid_video_features(model, dataset, save_name, batch_size=1000 , d
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     with torch.no_grad():
-        for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=10, pin_memory=True)):
+        for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=10, pin_memory=True,shuffle=False)):
             # t = (images.shape)[2]
             # if args.center_frame:
             #     images = images.squeeze(2)
             features = model.encode_vision(images.to(device))
             all_features.append(features.cpu())
+            all_labels+=(labels.tolist())
     torch.save(torch.cat(all_features), save_name)
+    # torch.save(torch.cat(all_labels), os.path.join(save_dir,'label.pt'))
+    with open(os.path.join(save_dir,"label.txt"), "w") as file:
+        for item in all_labels:
+            file.write(f"{item}\n") 
     #free memory
     del all_features
+    del all_labels
     torch.cuda.empty_cache()
     return
 def save_internvid_text_features(model, text, save_name, batch_size=1000):
