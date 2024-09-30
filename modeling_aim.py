@@ -270,11 +270,11 @@ class AIM(nn.Module):
 
     def forward_features(self, x: torch.Tensor):
         B, C, T, H, W = x.shape 
-        center_idx = T // 2 
+    #     center_idx = T // 2 
     
-    # center 값을 복사하여 새로운 텐서로 만들기
-        center_value = x[:, :, center_idx, :, :].unsqueeze(2)  # [B, C, 1, H, W] 크기의 텐서 생성
-        x = center_value.repeat(1, 1, T, 1, 1)  #
+    # # center 값을 복사하여 새로운 텐서로 만들기
+    #     center_value = x[:, :, center_idx, :, :].unsqueeze(2)  # [B, C, 1, H, W] 크기의 텐서 생성
+    #     x = center_value.repeat(1, 1, T, 1, 1)  #
         x = rearrange(x, 'b c t h w -> (b t) c h w')
         x = self.conv1(x)
         x = x.reshape(x.shape[0], x.shape[1], -1) 

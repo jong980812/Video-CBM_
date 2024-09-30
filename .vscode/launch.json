@@ -66,10 +66,10 @@
                 "--interpretability_cutoff","0.2",
                 "--backbone","AIM",
                 "--finetune","/data/jong980812/project/VideoMAE/result/aim_k100/OUT/checkpoint-best/mp_rank_00_model_states.pt",
-                "--dual_encoder","clip",
+                "--dual_encoder","internvid",
                 "--lavila_ckpt","/data/datasets/video_checkpoint/lavila_TSF_B.pth",
                 "--proj_steps","500",
-                // "--saved_features"
+                "--saved_features"
 
             ]
         }

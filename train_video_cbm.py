@@ -212,8 +212,17 @@ def train_cbm_and_save(args):
     video_utils.init_distributed_mode(args)
     
     seed = args.seed
-    torch.manual_seed(seed)
-    np.random.seed(seed)
+    random.seed(seed)  # Python random seed 설정
+    np.random.seed(seed)  # NumPy random seed 설정
+    torch.manual_seed(seed)  # PyTorch random seed 설정 (CPU)
+    
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)  # PyTorch random seed 설정 (CUDA)
+        torch.cuda.manual_seed_all(seed)  # 모든 GPU에 적용
+        
+    # cuDNN의 비결정적 동작을 방지 (성능에 약간의 영향을 줄 수 있음)
+    torch.backends.cudnn.deterministic = True  
+    torch.backends.cudnn.benchmark = False
     if not os.path.exists(args.save_dir):
         os.mkdir(args.save_dir)
     if args.concept_set==None:
@@ -235,15 +244,15 @@ def train_cbm_and_save(args):
 
     #save activations and get save_paths
     for d_probe in [d_train, d_val]:
-        cbm_utils.save_activations(clip_name = args.clip_name, target_name = args.backbone, 
+        cbm_utils.save_activations(clip_name = args.dual_encoder, target_name = args.backbone, 
                                target_layers = [args.feature_layer], d_probe = d_probe,
                                concept_set = args.concept_set, batch_size = args.batch_size, 
                                device =device, pool_mode = "avg", save_dir = args.activation_dir,
                                args=args)
         
-    target_save_name, clip_save_name, text_save_name = cbm_utils.get_save_names(args.clip_name, args.backbone, 
+    target_save_name, clip_save_name, text_save_name = cbm_utils.get_save_names(args.dual_encoder, args.backbone, 
                                             args.feature_layer,d_train, args.concept_set, "avg", args.activation_dir)
-    val_target_save_name, val_clip_save_name, text_save_name =  cbm_utils.get_save_names(args.clip_name, args.backbone,
+    val_target_save_name, val_clip_save_name, text_save_name =  cbm_utils.get_save_names(args.dual_encoder, args.backbone,
                                             args.feature_layer, d_val, args.concept_set, "avg", args.activation_dir)
     
     feature_storage = '/data/datasets/videocbm/features'
