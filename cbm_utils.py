@@ -62,7 +62,7 @@ def save_clip_image_features(model, dataset, save_name, batch_size=1000 , device
             # t = (images.shape)[2]
             # if args.center_frame:
             #     images = images.squeeze(2)
-            features = model.encode_image(images.to(device))# B, D
+            features = model.encode_video(images.to(device))# B, D
             all_features.append(features.cpu())
 
     torch.save(torch.cat(all_features), save_name)
@@ -104,7 +104,8 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
     if args.dual_encoder == "lavila":
         dual_encoder_model, clip_preprocess = get_lavila(args,device=device) 
     elif args.dual_encoder == "clip":
-        dual_encoder_model, clip_preprocess = clip.load(clip_name, device=device)
+        name = 'ViT-B/16'
+        dual_encoder_model, clip_preprocess = clip.load(name, device=device)
     elif args.dual_encoder == "internvid":
         dual_encoder_model, _ = get_intervid(args,device)
         clip_preprocess = None
@@ -115,42 +116,43 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
         target_model, target_preprocess = clip.load(target_name[5:], device=device)
     else:
         target_model, target_preprocess = data_utils.get_target_model(target_name, device,args)
-    if args.distributed:
-        dual_encoder_model_ddp = torch.nn.parallel.DistributedDataParallel(dual_encoder_model, device_ids=[args.gpu], find_unused_parameters=True)
-        target_model_ddp = torch.nn.parallel.DistributedDataParallel(target_model, device_ids=[args.gpu], find_unused_parameters=True)
-        model_without_ddp = dual_encoder_model_ddp.module
-        target_model_without_ddp = target_model_ddp.module
-    
+    # if args.distributed:
+    #     dual_encoder_model_ddp = torch.nn.parallel.DistributedDataParallel(dual_encoder_model, device_ids=[args.gpu], find_unused_parameters=True)
+    #     target_model_ddp = torch.nn.parallel.DistributedDataParallel(target_model, device_ids=[args.gpu], find_unused_parameters=True)
+    #     model_without_ddp = dual_encoder_model_ddp.module
+    #     target_model_without_ddp = target_model_ddp.module
+    target_model.to(device)
+    target_model.eval()
     #setup data
     #! Video Dataset은 embedded preprocess 
     data_c = data_utils.get_data(d_probe, clip_preprocess,args)
     data_t = data_utils.get_data(d_probe, target_preprocess,args)
     num_tasks = video_utils.get_world_size()
     global_rank = video_utils.get_rank()
-    sampler_c = torch.utils.data.DistributedSampler(
-        data_c, num_replicas=num_tasks, rank=global_rank, shuffle=True
-    )
-    sampler_t = torch.utils.data.DistributedSampler(
-        data_t, num_replicas=num_tasks, rank=global_rank, shuffle=True
-    )
-    data_loader_c = torch.utils.data.DataLoader(
-        data_c, sampler=sampler_c,
-        batch_size=args.batch_size,
-        num_workers=args.num_workers,
-        pin_memory=args.pin_mem,
-        drop_last=False,
-        collate_fn=None,
-        shuffle=False
-    )
-    data_loader_t = torch.utils.data.DataLoader(
-        data_c, sampler=sampler_t,
-        batch_size=args.batch_size,
-        num_workers=args.num_workers,
-        pin_memory=args.pin_mem,
-        drop_last=False,
-        collate_fn=None,
-        shuffle=False
-    )
+    # sampler_c = torch.utils.data.DistributedSampler(
+    #     data_c, num_replicas=num_tasks, rank=global_rank, shuffle=True
+    # )
+    # sampler_t = torch.utils.data.DistributedSampler(
+    #     data_t, num_replicas=num_tasks, rank=global_rank, shuffle=True
+    # )
+    # data_loader_c = torch.utils.data.DataLoader(
+    #     data_c, sampler=sampler_c,
+    #     batch_size=args.batch_size,
+    #     num_workers=args.num_workers,
+    #     pin_memory=args.pin_mem,
+    #     drop_last=False,
+    #     collate_fn=None,
+    #     shuffle=False
+    # )
+    # data_loader_t = torch.utils.data.DataLoader(
+    #     data_c, sampler=sampler_t,
+    #     batch_size=args.batch_size,
+    #     num_workers=args.num_workers,
+    #     pin_memory=args.pin_mem,
+    #     drop_last=False,
+    #     collate_fn=None,
+    #     shuffle=False
+    # )
     with open(concept_set, 'r') as f: 
         words = (f.read()).split('\n')
     
@@ -171,7 +173,7 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
     
     if target_name.startswith("clip_"):
         save_clip_image_features(target_model, data_t, target_save_name, batch_size, device,args)
-    elif target_name.startswith("vmae_"):
+    elif target_name.startswith("vmae_") or target_name=='AIM':
         save_vmae_video_features(target_model,data_t,target_save_name,batch_size,device,args) if num_tasks==1  else save_vmae_video_features_multinode(model=target_model_ddp, model_without_ddp=target_model_without_ddp,dataset=None,data_loader=data_loader_t, save_name=target_save_name, batch_size=batch_size, device=device,args=args) 
     else:
         save_target_activations(target_model, data_t, target_save_name, target_layers,
@@ -230,7 +232,7 @@ def get_save_names(clip_name, target_name, target_layer, d_probe, concept_set, p
     # else:
     #     target_save_name = "{}/{}_{}_{}{}.pt".format(save_dir, d_probe, target_name, target_layer,
     #                                              PM_SUFFIX[pool_mode])
-    clip_save_name = "{}/{}_clip_{}.pt".format(save_dir, d_probe, clip_name.replace('/', ''))
+    clip_save_name = "{}/{}_{}.pt".format(save_dir, d_probe, clip_name.replace('/', ''))
     concept_set_name = (concept_set.split("/")[-1]).split(".")[0]
     text_save_name = "{}/{}_{}.pt".format(save_dir, concept_set_name, clip_name.replace('/', ''))
     
@@ -311,7 +313,7 @@ def save_vmae_video_features(model, dataset, save_name, batch_size=1000 , device
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     with torch.no_grad():
-        for videos, labels in tqdm(DataLoader(dataset, batch_size, num_workers=10, pin_memory=True)):
+        for videos, labels in tqdm(DataLoader(dataset, batch_size, num_workers=10, pin_memory=True,shuffle=False)):
             # t = (images.shape)[2]
             # if args.center_frame:
             #     images = images.squeeze(2)
@@ -452,10 +454,10 @@ def save_internvid_video_features_multinode(model=None,model_without_ddp=None, d
     save_dir = save_name[:save_name.rfind("/")]
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-    world_size = dist.get_world_size()
-    rank = dist.get_rank()
-    if rank == 0:
-        data_loader = tqdm(data_loader)
+        world_size = dist.get_world_size()
+        rank = dist.get_rank()
+        if rank == 0:
+            data_loader = tqdm(data_loader)
     with torch.no_grad():
         # data_loader = tqdm(data_loader)
         for images, labels in data_loader:

@@ -8,6 +8,7 @@ from datasets import build_dataset
 import modeling_finetune
 from collections import OrderedDict
 from timm.models import create_model
+from modeling_aim import AIM
 import video_utils
 DATASET_ROOTS = {
     "imagenet_train": "YOUR_PATH/CLS-LOC/train/",
@@ -25,6 +26,7 @@ LABEL_FILES = {"places365":"data/categories_places365_clean.txt",
                "SSV2":"data/ssv2_classes.txt",
                "mini-SSV2":"data/mini-ssv2_classes.txt",
                "kinetics400":"data/kinetics400_classes.txt",
+               "kinetics100":"data/kinetics100_classes.txt",
                }
 
 def get_resnet_imagenet_preprocess():
@@ -52,6 +54,12 @@ def get_data(dataset_name, preprocess=None,args = None):
         data, _= build_dataset(is_train=True, test_mode=False, args=args)
     elif dataset_name == "kinetics400_val":
         data, _= build_dataset(is_train=False, test_mode=False, args=args)
+    elif dataset_name == "kinetics100_train":
+        data, _= build_dataset(is_train=True, test_mode=False, args=args)
+    elif dataset_name == "kinetics100_val":
+        data, _= build_dataset(is_train=False, test_mode=False, args=args)
+    elif dataset_name == "kinetics100_test":
+        data, _= build_dataset(is_train=False, test_mode=True, args=args)
     elif dataset_name == "cifar100_train":
         data = datasets.CIFAR100(root=os.path.expanduser("~/.cache"), download=True, train=True,
                                    transform=preprocess)
@@ -86,7 +94,7 @@ def get_target_model(target_name, device,args=None):
         model, preprocess = clip.load(target_name, device=device)
         target_model = lambda x: model.encode_image(x).float()
     elif target_name.startswith("vmae_"):
-        model = create_model(
+        target_model = create_model(
             target_name,
             pretrained=False,
             num_classes=args.nb_classes,
@@ -101,15 +109,36 @@ def get_target_model(target_name, device,args=None):
             use_mean_pooling=args.use_mean_pooling,
             init_scale=args.init_scale,
         )
-        patch_size = model.patch_embed.patch_size
+        patch_size = target_model.patch_embed.patch_size
         print("Patch size = %s" % str(patch_size))
         args.window_size = (args.num_frames // 2, args.input_size // patch_size[0], args.input_size // patch_size[1])
         args.patch_size = patch_size
         if args.finetune:
-            target_model = load_video_weight(model,args)
-        target_model.to(device)
-        target_model.eval()
+            target_model = load_vmae_weight(target_model,args)
+
         preprocess=None
+        target_model.to(device)
+    elif target_name.startswith('AIM'):
+        target_model = AIM(
+                input_resolution=224,
+                patch_size=16,
+                num_frames=args.num_frames,
+                width=768,
+                layers=12,
+                heads=12,
+                drop_path_rate=0.2,
+                adapter_scale=0.5,
+                num_classes=args.nb_classes,
+                init_scale=args.init_scale,
+                adapter_layers=[0,1,2,3,4,5,6,7,8,9,10,11],
+                args=args
+            )
+        checkpoint = torch.load(args.finetune,'cpu')
+        checkpoint = checkpoint['module']
+        preprocess=None
+        print(target_model.load_state_dict(checkpoint))
+        print('AIM succesfully is loaded')
+        target_model.to(device)
     elif target_name == 'resnet18_places': 
         target_model = models.resnet18(pretrained=False, num_classes=365).to(device)
         state_dict = torch.load('data/resnet18_places365.pth.tar')['state_dict']
@@ -147,7 +176,7 @@ def get_target_model(target_name, device,args=None):
 
 
 
-def load_video_weight(model,args=None):
+def load_vmae_weight(model,args=None):
     
     if args.finetune.startswith('https'):
         checkpoint = torch.hub.load_state_dict_from_url(

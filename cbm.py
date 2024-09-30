@@ -12,7 +12,7 @@ class CBM_model(torch.nn.Module):
             self.backbone = model
         elif "cub" in backbone_name:
             self.backbone = lambda x: model.features(x)
-        elif "vmae" in backbone_name:
+        elif "vmae" or 'AIM' in backbone_name:
             self.backbone = lambda x: model.forward_features(x)
         else:
             self.backbone = torch.nn.Sequential(*list(model.children())[:-1])

@@ -54,7 +54,7 @@ def train_cbm_and_save(args):
     
     with open(args.concept_set) as f:
         concepts = f.read().split("\n")
-    
+
     #save activations and get save_paths
     for d_probe in [d_train, d_val]:
         cbm_utils.save_activations(clip_name = args.clip_name, target_name = args.backbone, 
@@ -244,6 +244,11 @@ def train_cbm_and_save(args):
         total = W_g.numel()
         out_dict['sparsity'] = {"Non-zero weights":nnz, "Total weights":total, "Percentage non-zero":nnz/total}
         json.dump(out_dict, f, indent=2)
+    import cbm
+    test_d_probe = args.dataset+'_test'
+    eval_model = cbm.load_cbm(save_name, args.device,args)
+    accuracy = cbm_utils.get_accuracy_cbm(eval_model, test_d_probe, args.device,32,8)
+    print("Test set Accuracy: {:.2f}%".format(accuracy*100))
     
 if __name__=='__main__':
     args = parser.parse_args()

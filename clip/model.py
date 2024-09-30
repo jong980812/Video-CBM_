@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from typing import Tuple, Union
+from einops import rearrange
 
 import numpy as np
 import torch
@@ -221,7 +222,11 @@ class VisionTransformer(nn.Module):
         self.ln_post = LayerNorm(width)
         self.proj = nn.Parameter(scale * torch.randn(width, output_dim))
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, video=False):
+        if video:
+            B, C, T, H, W = x.shape 
+            x = rearrange(x, 'b c t h w -> (b t) c h w')
+
         x = self.conv1(x)  # shape = [*, width, grid, grid]
         x = x.reshape(x.shape[0], x.shape[1], -1)  # shape = [*, width, grid ** 2]
         x = x.permute(0, 2, 1)  # shape = [*, grid ** 2, width]
@@ -234,6 +239,9 @@ class VisionTransformer(nn.Module):
         x = x.permute(1, 0, 2)  # LND -> NLD
 
         x = self.ln_post(x[:, 0, :])
+        if video:
+            x = rearrange(x, '(b t) d -> b t d',b=B,t=T)
+            x = x.mean(dim=1)
 
         if self.proj is not None:
             x = x @ self.proj
@@ -340,6 +348,8 @@ class CLIP(nn.Module):
 
     def encode_image(self, image):
         return self.visual(image.type(self.dtype))
+    def encode_video(self, image):
+        return self.visual(image.type(self.dtype),True)
 
     def encode_text(self, text):
         x = self.token_embedding(text).type(self.dtype)  # [batch_size, n_ctx, d_model]

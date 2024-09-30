@@ -134,7 +134,8 @@ class VideoClsDataset(Dataset):
             buffer = self.data_transform(buffer)
             if self.center_frame:
                 buffer = buffer[:,self.clip_len//2,:,:]
-            return buffer, self.label_array[index]#, sample.split("/")[-1].split(".")[0]
+                return buffer,self.label_array[index],sample
+            return buffer, self.label_array[index]#sample.split("/")[-1].split(".")[0]
 
         elif self.mode == 'test':
             sample = self.test_dataset[index]
@@ -274,7 +275,9 @@ class VideoClsDataset(Dataset):
                 index = np.concatenate((index, np.ones(self.clip_len - seg_len // self.frame_sample_rate) * seg_len))
                 index = np.clip(index, 0, seg_len - 1).astype(np.int64)
             else:
-                end_idx = np.random.randint(converted_len, seg_len)
+                points = np.linspace(converted_len, seg_len, 4, endpoint=True)
+                end_idx = int((points[1]))
+                # end_idx = np.random.randint(converted_len, seg_len)
                 str_idx = end_idx - converted_len
                 index = np.linspace(str_idx, end_idx, num=self.clip_len)
                 index = np.clip(index, str_idx, end_idx - 1).astype(np.int64)
