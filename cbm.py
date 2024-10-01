@@ -75,7 +75,24 @@ def load_cbm(load_dir, device,argument):
 
     model = CBM_model(args['backbone'], W_c, W_g, b_g, proj_mean, proj_std, device,argument)
     return model
-
+def load_cbm_two_stream(load_dir, device,argument):
+    print('**********Load Spatio model***************')
+    with open(os.path.join(load_dir ,"args.txt"), 'r') as f:
+        args = json.load(f)
+    W_c = torch.load(os.path.join(load_dir,'spatial' ,"W_c.pt"), map_location=device)
+    W_g = torch.load(os.path.join(load_dir,'spatial', "W_g.pt"), map_location=device)
+    b_g = torch.load(os.path.join(load_dir,'spatial', "b_g.pt"), map_location=device)
+    proj_mean = torch.load(os.path.join(load_dir,'spatial', "proj_mean.pt"), map_location=device)
+    proj_std = torch.load(os.path.join(load_dir,'spatial', "proj_std.pt"), map_location=device)
+    s_model = CBM_model(args['backbone'], W_c, W_g, b_g, proj_mean, proj_std, device,argument)
+    print('**********Load Temporal model***************')
+    W_c = torch.load(os.path.join(load_dir,'temporal' ,"W_c.pt"), map_location=device)
+    W_g = torch.load(os.path.join(load_dir,'temporal', "W_g.pt"), map_location=device)
+    b_g = torch.load(os.path.join(load_dir,'temporal', "b_g.pt"), map_location=device)
+    proj_mean = torch.load(os.path.join(load_dir,'temporal', "proj_mean.pt"), map_location=device)
+    proj_std = torch.load(os.path.join(load_dir,'temporal', "proj_std.pt"), map_location=device)
+    t_model = CBM_model(args['backbone'], W_c, W_g, b_g, proj_mean, proj_std, device,argument)
+    return s_model,t_model
 def load_std(load_dir, device):
     with open(os.path.join(load_dir ,"args.txt"), 'r') as f:
         args = json.load(f)

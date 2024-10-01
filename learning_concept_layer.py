@@ -13,9 +13,9 @@ from torch.utils.data import DataLoader, TensorDataset
 import video_utils
 import torch.distributed as dist
 
-def train_cocept_layer(args, target_features,val_target_features,clip_feature,val_clip_features,save_name):
+def train_cocept_layer(args,concepts, target_features,val_target_features,clip_feature,val_clip_features,save_name):
     similarity_fn = similarity.cos_similarity_cubed_single
-    proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(s_concepts),
+    proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(concepts),
                                 bias=False).to(args.device)
     opt = torch.optim.Adam(proj_layer.parameters(), lr=1e-3)
 
@@ -55,27 +55,30 @@ def train_cocept_layer(args, target_features,val_target_features,clip_feature,va
     proj_layer.load_state_dict({"weight":best_weights})
     print("Best step:{}, Avg val similarity:{:.4f}".format(best_step, -best_val_loss.cpu()))
 
-    #delete s_concepts that are not interpretable
+    #delete concepts that are not interpretable
     with torch.no_grad():
         outs = proj_layer(val_target_features.to(args.device).detach())
         sim = similarity_fn(val_clip_features.to(args.device).detach(), outs)
         interpretable = sim > args.interpretability_cutoff
         
     if args.print:
-        for i, concept in enumerate(s_concepts):
+        for i, concept in enumerate(concepts):
             if sim[i]<=args.interpretability_cutoff:
                 print("Deleting {}, Iterpretability:{:.3f}".format(concept, sim[i]))
-    original_n_concept = len(s_concepts)
+    original_n_concept = len(concepts)
 
-    s_concepts = [s_concepts[i] for i in range(len(s_concepts)) if interpretable[i]]
-    print(f"Num concept {len(s_concepts)} from {original_n_concept}")
+    concepts = [concepts[i] for i in range(len(concepts)) if interpretable[i]]
+    print(f"Num concept {len(concepts)} from {original_n_concept}")
     W_c = proj_layer.weight[interpretable]
     torch.save(W_c, os.path.join(save_name ,"W_c.pt"))
+    with open(os.path.join(save_name, "concepts.txt"), 'w') as f:
+        f.write(concepts[0])
+        for concept in concepts[1:]:
+            f.write('\n'+concept)
+    return W_c,concepts
 
-    return W_c
 
-
-def train_classification_layer(args,W_c, target_features,val_target_features,clip_feature,val_clip_features,save_name):
+def train_classification_layer(args,W_c,concepts, target_features,val_target_features,save_name):
     proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(concepts), bias=False)
     proj_layer.load_state_dict({"weight":W_c})
     d_train = args.data_set + "_train"
@@ -132,3 +135,12 @@ def train_classification_layer(args,W_c, target_features,val_target_features,cli
     torch.save(train_std, os.path.join(save_name, "proj_std.pt"))
     torch.save(W_g, os.path.join(save_name, "W_g.pt"))
     torch.save(b_g, os.path.join(save_name, "b_g.pt"))
+    with open(os.path.join(save_name, "metrics.txt"), 'w') as f:
+        out_dict = {}
+        for key in ('lam', 'lr', 'alpha', 'time'):
+            out_dict[key] = float(output_proj['path'][0][key])
+        out_dict['metrics'] = output_proj['path'][0]['metrics']
+        nnz = (W_g.abs() > 1e-5).sum().item()
+        total = W_g.numel()
+        out_dict['sparsity'] = {"Non-zero weights":nnz, "Total weights":total, "Percentage non-zero":nnz/total}
+        json.dump(out_dict, f, indent=2)
