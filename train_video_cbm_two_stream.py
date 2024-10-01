@@ -12,6 +12,7 @@ from glm_saga.elasticnet import IndexedTensorDataset, glm_saga
 from torch.utils.data import DataLoader, TensorDataset
 import video_utils
 import torch.distributed as dist
+from learning_concept_layer import train_cocept_layer
 
 parser = argparse.ArgumentParser(description='Settings for creating CBM')
 # parser.add_argument('--batch_size', default=64, type=int)
@@ -331,122 +332,32 @@ def train_cbm_and_save(args):
     #! Learning Concept Layer
     #learn projection layer
     # explained model feature to concept layer
-    #? ********************************Spatio
-    proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(s_concepts),
-                                bias=False).to(args.device)
-    opt = torch.optim.Adam(proj_layer.parameters(), lr=1e-3)
+    save_name = "{}/{}_cbm_{}".format(args.save_dir, args.data_set, datetime.datetime.now().strftime("%Y_%m_%d_%H_%M"))
+    os.mkdir(save_name)
+    save_spatial = os.path.join(save_name,'spatial')
+    save_temporal = os.path.join(save_name,'temporal')
+    os.mkdir(save_spatial)
+    os.mkdir(save_temporal)
     
-    indices = [ind for ind in range(len(target_features))]
-    
-    best_val_loss = float("inf")
-    best_step = 0
-    best_weights = None
-    proj_batch_size = min(args.proj_batch_size, len(target_features))
-    for i in range(args.proj_steps):
-        batch = torch.LongTensor(random.sample(indices, k=proj_batch_size))
-        outs = proj_layer(target_features[batch].to(args.device).detach())
-        loss = -similarity_fn(s_clip_features[batch].to(args.device).detach(), outs)
-        
-        loss = torch.mean(loss)
-        loss.backward()
-        opt.step()
-        if i%50==0 or i==args.proj_steps-1:
-            with torch.no_grad():
-                val_output = proj_layer(val_target_features.to(args.device).detach())
-                val_loss = -similarity_fn(s_val_clip_features.to(args.device).detach(), val_output)
-                val_loss = torch.mean(val_loss)
-            if i==0:
-                best_val_loss = val_loss
-                best_step = i
-                best_weights = proj_layer.weight.clone()
-                print("Step:{}, Avg train similarity:{:.4f}, Avg val similarity:{:.4f}".format(best_step, -loss.cpu(),
-                                                                                            -best_val_loss.cpu()))
-                
-            elif val_loss < best_val_loss:
-                best_val_loss = val_loss
-                best_step = i
-                best_weights = proj_layer.weight.clone()
-            else: #stop if val loss starts increasing
-                break
-        opt.zero_grad()
-    proj_layer.load_state_dict({"weight":best_weights})
-    print("Best step:{}, Avg val similarity:{:.4f}".format(best_step, -best_val_loss.cpu()))
-    
-    #delete s_concepts that are not interpretable
-    with torch.no_grad():
-        outs = proj_layer(val_target_features.to(args.device).detach())
-        sim = similarity_fn(s_val_clip_features.to(args.device).detach(), outs)
-        interpretable = sim > args.interpretability_cutoff
-        
-    if args.print:
-        for i, concept in enumerate(s_concepts):
-            if sim[i]<=args.interpretability_cutoff:
-                print("Deleting {}, Iterpretability:{:.3f}".format(concept, sim[i]))
-    original_n_concept = len(s_concepts)
-    
-    s_concepts = [s_concepts[i] for i in range(len(s_concepts)) if interpretable[i]]
-    print(f"Num concept {len(s_concepts)} from {original_n_concept}")
-    spatio_W_c = proj_layer.weight[interpretable]
+    s_W_c = train_cocept_layer(args,
+                               target_features,
+                               val_target_features,
+                               s_clip_features,
+                               s_val_clip_features,
+                               save_spatial)
+    t_W_c = train_cocept_layer(args,
+                               target_features,
+                               val_target_features,
+                               t_clip_features,
+                               t_val_clip_features,
+                               save_temporal)
 
-    #? ******************************** Temporal
-    proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(t_concepts),
-                                bias=False).to(args.device)
-    opt = torch.optim.Adam(proj_layer.parameters(), lr=1e-3)
-    
-    indices = [ind for ind in range(len(target_features))]
-    
-    best_val_loss = float("inf")
-    best_step = 0
-    best_weights = None
-    proj_batch_size = min(args.proj_batch_size, len(target_features))
-    for i in range(args.proj_steps):
-        batch = torch.LongTensor(random.sample(indices, k=proj_batch_size))
-        outs = proj_layer(target_features[batch].to(args.device).detach())
-        loss = -similarity_fn(s_clip_features[batch].to(args.device).detach(), outs)
-        
-        loss = torch.mean(loss)
-        loss.backward()
-        opt.step()
-        if i%50==0 or i==args.proj_steps-1:
-            with torch.no_grad():
-                val_output = proj_layer(val_target_features.to(args.device).detach())
-                val_loss = -similarity_fn(s_val_clip_features.to(args.device).detach(), val_output)
-                val_loss = torch.mean(val_loss)
-            if i==0:
-                best_val_loss = val_loss
-                best_step = i
-                best_weights = proj_layer.weight.clone()
-                print("Step:{}, Avg train similarity:{:.4f}, Avg val similarity:{:.4f}".format(best_step, -loss.cpu(),
-                                                                                            -best_val_loss.cpu()))
-                
-            elif val_loss < best_val_loss:
-                best_val_loss = val_loss
-                best_step = i
-                best_weights = proj_layer.weight.clone()
-            else: #stop if val loss starts increasing
-                break
-        opt.zero_grad()
-    proj_layer.load_state_dict({"weight":best_weights})
-    print("Best step:{}, Avg val similarity:{:.4f}".format(best_step, -best_val_loss.cpu()))
-    
-    #delete t_concepts that are not interpretable
-    with torch.no_grad():
-        outs = proj_layer(val_target_features.to(args.device).detach())
-        sim = similarity_fn(s_val_clip_features.to(args.device).detach(), outs)
-        interpretable = sim > args.interpretability_cutoff
-        
-    if args.print:
-        for i, concept in enumerate(t_concepts):
-            if sim[i]<=args.interpretability_cutoff:
-                print("Deleting {}, Iterpretability:{:.3f}".format(concept, sim[i]))
-    original_n_concept = len(t_concepts)
-    
-    t_concepts = [t_concepts[i] for i in range(len(t_concepts)) if interpretable[i]]
-    print(f"Num concept {len(t_concepts)} from {original_n_concept}")
     
     del s_clip_features, s_val_clip_features,t_clip_features, t_val_clip_features
     
-    temporal_W_c = proj_layer.weight[interpretable]
+
+    
+    
     proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(concepts), bias=False)
     proj_layer.load_state_dict({"weight":W_c})
     

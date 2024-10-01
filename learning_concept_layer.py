@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import video_utils
 import torch.distributed as dist
 
-def train_cocept_layer(args, target_features,val_target_features,clip_feature,val_clip_features):
+def train_cocept_layer(args, target_features,val_target_features,clip_feature,val_clip_features,save_name):
     similarity_fn = similarity.cos_similarity_cubed_single
     proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(s_concepts),
                                 bias=False).to(args.device)
@@ -70,4 +70,65 @@ def train_cocept_layer(args, target_features,val_target_features,clip_feature,va
     s_concepts = [s_concepts[i] for i in range(len(s_concepts)) if interpretable[i]]
     print(f"Num concept {len(s_concepts)} from {original_n_concept}")
     W_c = proj_layer.weight[interpretable]
+    torch.save(W_c, os.path.join(save_name ,"W_c.pt"))
+
     return W_c
+
+
+def train_classification_layer(args,W_c, target_features,val_target_features,clip_feature,val_clip_features,save_name):
+    proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(concepts), bias=False)
+    proj_layer.load_state_dict({"weight":W_c})
+    d_train = args.data_set + "_train"
+    d_val = args.data_set + "_val"
+    train_targets = data_utils.get_targets_only(d_train,args)
+    val_targets = data_utils.get_targets_only(d_val,args)
+    cls_file = data_utils.LABEL_FILES[args.data_set]
+    with open(cls_file, "r") as f:
+        classes = f.read().split("\n")
+    with torch.no_grad():
+        train_c = proj_layer(target_features.detach())
+        val_c = proj_layer(val_target_features.detach())
+        
+        train_mean = torch.mean(train_c, dim=0, keepdim=True)
+        train_std = torch.std(train_c, dim=0, keepdim=True)
+        
+        train_c -= train_mean
+        train_c /= train_std
+        
+        train_y = torch.LongTensor(train_targets)
+        indexed_train_ds = IndexedTensorDataset(train_c, train_y)
+
+        val_c -= train_mean
+        val_c /= train_std
+        
+        val_y = torch.LongTensor(val_targets)
+
+        val_ds = TensorDataset(val_c,val_y)
+
+
+    indexed_train_loader = DataLoader(indexed_train_ds, batch_size=args.saga_batch_size, shuffle=True)
+    val_loader = DataLoader(val_ds, batch_size=args.saga_batch_size, shuffle=False)
+
+    # Make linear model and zero initialize
+    linear = torch.nn.Linear(train_c.shape[1],len(classes)).to(args.device)
+    linear.weight.data.zero_()
+    linear.bias.data.zero_()
+    
+    STEP_SIZE = 0.05
+    ALPHA = 0.99
+    metadata = {}
+    metadata['max_reg'] = {}
+    metadata['max_reg']['nongrouped'] = args.lam
+
+    # Solve the GLM path
+    #concept layer to classification
+    output_proj = glm_saga(linear, indexed_train_loader, STEP_SIZE, args.n_iters, ALPHA, epsilon=1, k=1,
+                    val_loader=val_loader, do_zero=False, metadata=metadata, n_ex=len(target_features), n_classes = len(classes))
+    W_g = output_proj['path'][0]['weight']
+    b_g = output_proj['path'][0]['bias']
+    
+
+    torch.save(train_mean, os.path.join(save_name, "proj_mean.pt"))
+    torch.save(train_std, os.path.join(save_name, "proj_std.pt"))
+    torch.save(W_g, os.path.join(save_name, "W_g.pt"))
+    torch.save(b_g, os.path.join(save_name, "b_g.pt"))
