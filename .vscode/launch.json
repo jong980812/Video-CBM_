@@ -47,10 +47,11 @@
             "args": [
                 "--nproc_per_node", "1",
                 "--master_port", "3333",
-                "/data/jong980812/project/Video-CBM/train_video_cbm.py",
+                "/data/jong980812/project/Video-CBM-two-stream/train_video_cbm_two_stream.py",
                 "--data_set","kinetics100", // Video
                 "--nb_classes","100",
-                "--concept_set","/data/jong980812/project/Video-CBM/data/concept_sets/kintics400_3_per_class.txt",
+                "--s_concept_set","/data/jong980812/project/Video-CBM-two-stream/data/concept_sets/llava_ver2/k100_spatio_concepts_ver2.txt",
+                "--t_concept_set","/data/jong980812/project/Video-CBM-two-stream/data/concept_sets/llava_ver2/k100_temporal_concepts_ver2.txt",
                 // "--t_concept_set","/data/jong980812/project/Video-CBM/data/concept_sets/ssv2_ost_temporal_concepts.txt",
                 // "--t_text_save_name","/data/jong980812/project/Video-CBM_backup/results/ssv2/finetune_internvid_ost_temporal/activation/ssv2_ost_temporal_concepts_ViT-B16.pt",
                 "--batch_size","32",

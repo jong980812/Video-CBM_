@@ -176,7 +176,9 @@ parser.add_argument('--dist_url', default='env://',
 parser.add_argument('--enable_deepspeed', action='store_true', default=False)
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 parser.add_argument("--dataset", type=str, default="cifar10")
-parser.add_argument("--concept_set", type=str, default=None, 
+parser.add_argument("--s_concept_set", type=str, default=None, 
+                    help="path to concept set name")
+parser.add_argument("--t_concept_set", type=str, default=None, 
                     help="path to concept set name")
 parser.add_argument("--backbone", type=str, default="clip_RN50", help="Which pretrained model to use as backbone")
 parser.add_argument("--clip_name", type=str, default="ViT-B/16", help="Which CLIP model to use")
@@ -225,8 +227,6 @@ def train_cbm_and_save(args):
     torch.backends.cudnn.benchmark = False
     if not os.path.exists(args.save_dir):
         os.mkdir(args.save_dir)
-    if args.concept_set==None:
-        args.concept_set = "data/concept_sets/{}_filtered.txt".format(args.data_set)
     args.video_anno_path=os.path.join(os.getcwd(),'data/video_annotation',args.data_set)
     similarity_fn = similarity.cos_similarity_cubed_single
     device = torch.device(args.device)
@@ -239,21 +239,22 @@ def train_cbm_and_save(args):
     with open(cls_file, "r") as f:
         classes = f.read().split("\n")
     
-    with open(args.concept_set) as f:
-        concepts = f.read().split("\n")
-
+    with open(args.s_concept_set) as f:
+        s_concepts = f.read().split("\n")
+    with open(args.t_concept_set) as f:
+        t_concepts = f.read().split("\n")
     #save activations and get save_paths
     for d_probe in [d_train, d_val]:
         cbm_utils.save_activations(clip_name = args.dual_encoder, target_name = args.backbone, 
                                target_layers = [args.feature_layer], d_probe = d_probe,
-                               concept_set = args.concept_set, batch_size = args.batch_size, 
+                               concept_set = (args.s_concept_set, args.t_concept_set), batch_size = args.batch_size, 
                                device =device, pool_mode = "avg", save_dir = args.activation_dir,
                                args=args)
         
-    target_save_name, clip_save_name, text_save_name = cbm_utils.get_save_names(args.dual_encoder, args.backbone, 
-                                            args.feature_layer,d_train, args.concept_set, "avg", args.activation_dir)
-    val_target_save_name, val_clip_save_name, text_save_name =  cbm_utils.get_save_names(args.dual_encoder, args.backbone,
-                                            args.feature_layer, d_val, args.concept_set, "avg", args.activation_dir)
+    target_save_name, clip_save_name, s_text_save_name, t_text_save_name = cbm_utils.get_save_names(args.dual_encoder, args.backbone, 
+                                            args.feature_layer,d_train, (args.s_concept_set, args.t_concept_set), "avg", args.activation_dir)
+    val_target_save_name, val_clip_save_name, s_text_save_name, t_text_save_name =  cbm_utils.get_save_names(args.dual_encoder, args.backbone,
+                                            args.feature_layer, d_val, (args.s_concept_set, args.t_concept_set), "avg", args.activation_dir)
     
     feature_storage = '/data/datasets/videocbm/features'
     if args.saved_features:
@@ -275,43 +276,63 @@ def train_cbm_and_save(args):
         val_image_features = torch.load(val_clip_save_name, map_location="cpu").float()
         val_image_features /= torch.norm(val_image_features, dim=1, keepdim=True)
 
-        text_features = torch.load(text_save_name, map_location="cpu").float()
-        text_features /= torch.norm(text_features, dim=1, keepdim=True)
+        s_text_features = torch.load(s_text_save_name, map_location="cpu").float()
+        s_text_features /= torch.norm(s_text_features, dim=1, keepdim=True)
         
-        clip_features = image_features @ text_features.T
-        val_clip_features = val_image_features @ text_features.T
-
-        del image_features, text_features, val_image_features
+        t_text_features = torch.load(t_text_save_name, map_location="cpu").float()
+        t_text_features /= torch.norm(t_text_features, dim=1, keepdim=True)
+        
+        s_clip_features = image_features @ s_text_features.T
+        s_val_clip_features = val_image_features @ s_text_features.T
+        t_clip_features = image_features @ t_text_features.T
+        t_val_clip_features = val_image_features @ t_text_features.T
+        
+        del image_features, s_text_features, t_text_features, val_image_features
     
     #filter concepts not activating highly
-    highest = torch.mean(torch.topk(clip_features, dim=0, k=5)[0], dim=0)
+    s_highest = torch.mean(torch.topk(s_clip_features, dim=0, k=5)[0], dim=0)
+    t_highest = torch.mean(torch.topk(t_clip_features, dim=0, k=5)[0], dim=0)
     
     if args.print:
-        for i, concept in enumerate(concepts):
-            if highest[i]<=args.clip_cutoff:
-                print("Deleting {}, CLIP top5:{:.3f}".format(concept, highest[i]))
+        for i, concept in enumerate(s_concepts):
+            if s_highest[i]<=args.clip_cutoff:
+                print("**Spatial** Deleting {}, CLIP top5:{:.3f}".format(concept, s_highest[i]))
 
-    original_n_concept = len(concepts)
-    concepts = [concepts[i] for i in range(len(concepts)) if highest[i]>args.clip_cutoff]
-    print(f"Num concept {len(concepts)} from {original_n_concept}")
+    original_n_concept = len(s_concepts)
+    s_concepts = [s_concepts[i] for i in range(len(s_concepts)) if s_highest[i]>args.clip_cutoff]
+    print(f"**Spatial** Num concept {len(s_concepts)} from {original_n_concept}")
+    if args.print:
+        for i, concept in enumerate(t_concepts):
+            if t_highest[i]<=args.clip_cutoff:
+                print("**Temporal** Deleting {}, CLIP top5:{:.3f}".format(concept, t_highest[i]))
+
+    original_n_concept = len(t_concepts)
+    t_concepts = [t_concepts[i] for i in range(len(t_concepts)) if t_highest[i]>args.clip_cutoff]
+    print(f"**Temporal** Num concept {len(t_concepts)} from {original_n_concept}")
     
     #save memory by recalculating
-    del clip_features
+    del s_clip_features, t_clip_features
     with torch.no_grad():
         image_features = torch.load(clip_save_name, map_location="cpu").float()
         image_features /= torch.norm(image_features, dim=1, keepdim=True)
 
-        text_features = torch.load(text_save_name, map_location="cpu").float()[highest>args.clip_cutoff]
-        text_features /= torch.norm(text_features, dim=1, keepdim=True)
-    
-        clip_features = image_features @ text_features.T
+        s_text_features = torch.load(s_text_save_name, map_location="cpu").float()[s_highest>args.clip_cutoff]
+        s_text_features /= torch.norm(s_text_features, dim=1, keepdim=True)
+        
+        t_text_features = torch.load(t_text_save_name, map_location="cpu").float()[t_highest>args.clip_cutoff]
+        t_text_features /= torch.norm(t_text_features, dim=1, keepdim=True)
+        
+        s_clip_features = image_features @ s_text_features.T
+        t_clip_features = image_features @ t_text_features.T
         del image_features, text_features
     
-    val_clip_features = val_clip_features[:, highest>args.clip_cutoff]
-    
+    s_val_clip_features = s_val_clip_features[:, s_highest>args.clip_cutoff]
+    t_val_clip_features = t_val_clip_features[:, t_highest>args.clip_cutoff]
+    #! Learning Concept Layer
     #learn projection layer
     # explained model feature to concept layer
-    proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(concepts),
+    #? ********************************Spatio
+    proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(s_concepts),
                                 bias=False).to(args.device)
     opt = torch.optim.Adam(proj_layer.parameters(), lr=1e-3)
     
@@ -324,7 +345,7 @@ def train_cbm_and_save(args):
     for i in range(args.proj_steps):
         batch = torch.LongTensor(random.sample(indices, k=proj_batch_size))
         outs = proj_layer(target_features[batch].to(args.device).detach())
-        loss = -similarity_fn(clip_features[batch].to(args.device).detach(), outs)
+        loss = -similarity_fn(s_clip_features[batch].to(args.device).detach(), outs)
         
         loss = torch.mean(loss)
         loss.backward()
@@ -332,7 +353,7 @@ def train_cbm_and_save(args):
         if i%50==0 or i==args.proj_steps-1:
             with torch.no_grad():
                 val_output = proj_layer(val_target_features.to(args.device).detach())
-                val_loss = -similarity_fn(val_clip_features.to(args.device).detach(), val_output)
+                val_loss = -similarity_fn(s_val_clip_features.to(args.device).detach(), val_output)
                 val_loss = torch.mean(val_loss)
             if i==0:
                 best_val_loss = val_loss
@@ -348,28 +369,84 @@ def train_cbm_and_save(args):
             else: #stop if val loss starts increasing
                 break
         opt.zero_grad()
-        
     proj_layer.load_state_dict({"weight":best_weights})
     print("Best step:{}, Avg val similarity:{:.4f}".format(best_step, -best_val_loss.cpu()))
     
-    #delete concepts that are not interpretable
+    #delete s_concepts that are not interpretable
     with torch.no_grad():
         outs = proj_layer(val_target_features.to(args.device).detach())
-        sim = similarity_fn(val_clip_features.to(args.device).detach(), outs)
+        sim = similarity_fn(s_val_clip_features.to(args.device).detach(), outs)
         interpretable = sim > args.interpretability_cutoff
         
     if args.print:
-        for i, concept in enumerate(concepts):
+        for i, concept in enumerate(s_concepts):
             if sim[i]<=args.interpretability_cutoff:
                 print("Deleting {}, Iterpretability:{:.3f}".format(concept, sim[i]))
-    original_n_concept = len(concepts)
+    original_n_concept = len(s_concepts)
     
-    concepts = [concepts[i] for i in range(len(concepts)) if interpretable[i]]
-    print(f"Num concept {len(concepts)} from {original_n_concept}")
+    s_concepts = [s_concepts[i] for i in range(len(s_concepts)) if interpretable[i]]
+    print(f"Num concept {len(s_concepts)} from {original_n_concept}")
+    spatio_W_c = proj_layer.weight[interpretable]
+
+    #? ******************************** Temporal
+    proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(t_concepts),
+                                bias=False).to(args.device)
+    opt = torch.optim.Adam(proj_layer.parameters(), lr=1e-3)
     
-    del clip_features, val_clip_features
+    indices = [ind for ind in range(len(target_features))]
     
-    W_c = proj_layer.weight[interpretable]
+    best_val_loss = float("inf")
+    best_step = 0
+    best_weights = None
+    proj_batch_size = min(args.proj_batch_size, len(target_features))
+    for i in range(args.proj_steps):
+        batch = torch.LongTensor(random.sample(indices, k=proj_batch_size))
+        outs = proj_layer(target_features[batch].to(args.device).detach())
+        loss = -similarity_fn(s_clip_features[batch].to(args.device).detach(), outs)
+        
+        loss = torch.mean(loss)
+        loss.backward()
+        opt.step()
+        if i%50==0 or i==args.proj_steps-1:
+            with torch.no_grad():
+                val_output = proj_layer(val_target_features.to(args.device).detach())
+                val_loss = -similarity_fn(s_val_clip_features.to(args.device).detach(), val_output)
+                val_loss = torch.mean(val_loss)
+            if i==0:
+                best_val_loss = val_loss
+                best_step = i
+                best_weights = proj_layer.weight.clone()
+                print("Step:{}, Avg train similarity:{:.4f}, Avg val similarity:{:.4f}".format(best_step, -loss.cpu(),
+                                                                                            -best_val_loss.cpu()))
+                
+            elif val_loss < best_val_loss:
+                best_val_loss = val_loss
+                best_step = i
+                best_weights = proj_layer.weight.clone()
+            else: #stop if val loss starts increasing
+                break
+        opt.zero_grad()
+    proj_layer.load_state_dict({"weight":best_weights})
+    print("Best step:{}, Avg val similarity:{:.4f}".format(best_step, -best_val_loss.cpu()))
+    
+    #delete t_concepts that are not interpretable
+    with torch.no_grad():
+        outs = proj_layer(val_target_features.to(args.device).detach())
+        sim = similarity_fn(s_val_clip_features.to(args.device).detach(), outs)
+        interpretable = sim > args.interpretability_cutoff
+        
+    if args.print:
+        for i, concept in enumerate(t_concepts):
+            if sim[i]<=args.interpretability_cutoff:
+                print("Deleting {}, Iterpretability:{:.3f}".format(concept, sim[i]))
+    original_n_concept = len(t_concepts)
+    
+    t_concepts = [t_concepts[i] for i in range(len(t_concepts)) if interpretable[i]]
+    print(f"Num concept {len(t_concepts)} from {original_n_concept}")
+    
+    del s_clip_features, s_val_clip_features,t_clip_features, t_val_clip_features
+    
+    temporal_W_c = proj_layer.weight[interpretable]
     proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(concepts), bias=False)
     proj_layer.load_state_dict({"weight":W_c})
     

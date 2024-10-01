@@ -89,17 +89,17 @@ def save_clip_text_features(model, text, save_name, batch_size=1000):
 def save_activations(clip_name, target_name, target_layers, d_probe, 
                      concept_set, batch_size, device, pool_mode, save_dir,args=None):
     
-    
+    s_concept_set, t_concept_set = concept_set
 
-    target_save_name, clip_save_name, text_save_name = get_save_names(clip_name, target_name, 
+    target_save_name, clip_save_name, s_text_save_name, t_text_save_name = get_save_names(clip_name, target_name, 
                                                                     "{}", d_probe, concept_set, 
                                                                       pool_mode, save_dir)
-    save_names = {"clip": clip_save_name, "text": text_save_name}
-    for target_layer in target_layers:
-        save_names[target_layer] = target_save_name.format(target_layer)
+    # save_names = {"clip": clip_save_name, "text": text_save_name}
+    # for target_layer in target_layers:
+    #     save_names[target_layer] = target_save_name.format(target_layer)
         
-    if _all_saved(save_names):
-        return
+    # if _all_saved(save_names):
+    #     return
     
     if args.dual_encoder == "lavila":
         dual_encoder_model, clip_preprocess = get_lavila(args,device=device) 
@@ -116,57 +116,33 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
         target_model, target_preprocess = clip.load(target_name[5:], device=device)
     else:
         target_model, target_preprocess = data_utils.get_target_model(target_name, device,args)
-    # if args.distributed:
-    #     dual_encoder_model_ddp = torch.nn.parallel.DistributedDataParallel(dual_encoder_model, device_ids=[args.gpu], find_unused_parameters=True)
-    #     target_model_ddp = torch.nn.parallel.DistributedDataParallel(target_model, device_ids=[args.gpu], find_unused_parameters=True)
-    #     model_without_ddp = dual_encoder_model_ddp.module
-    #     target_model_without_ddp = target_model_ddp.module
     target_model.to(device)
     target_model.eval()
     #setup data
     #! Video Dataset은 embedded preprocess 
     data_c = data_utils.get_data(d_probe, clip_preprocess,args)
     data_t = data_utils.get_data(d_probe, target_preprocess,args)
-    num_tasks = video_utils.get_world_size()
-    global_rank = video_utils.get_rank()
-    # sampler_c = torch.utils.data.DistributedSampler(
-    #     data_c, num_replicas=num_tasks, rank=global_rank, shuffle=True
-    # )
-    # sampler_t = torch.utils.data.DistributedSampler(
-    #     data_t, num_replicas=num_tasks, rank=global_rank, shuffle=True
-    # )
-    # data_loader_c = torch.utils.data.DataLoader(
-    #     data_c, sampler=sampler_c,
-    #     batch_size=args.batch_size,
-    #     num_workers=args.num_workers,
-    #     pin_memory=args.pin_mem,
-    #     drop_last=False,
-    #     collate_fn=None,
-    #     shuffle=False
-    # )
-    # data_loader_t = torch.utils.data.DataLoader(
-    #     data_c, sampler=sampler_t,
-    #     batch_size=args.batch_size,
-    #     num_workers=args.num_workers,
-    #     pin_memory=args.pin_mem,
-    #     drop_last=False,
-    #     collate_fn=None,
-    #     shuffle=False
-    # )
-    with open(concept_set, 'r') as f: 
-        words = (f.read()).split('\n')
+
+    with open(s_concept_set, 'r') as f: 
+        s_words = (f.read()).split('\n')
+    with open(t_concept_set, 'r') as f: 
+        t_words = (f.read()).split('\n')
     
     if not args.dual_encoder =='internvid':
-        text = clip.tokenize(["{}".format(word) for word in words]).to(device)
-        save_clip_text_features(dual_encoder_model , text, text_save_name, batch_size)
+        s_text = clip.tokenize(["{}".format(word) for word in s_words]).to(device)
+        t_text = clip.tokenize(["{}".format(word) for word in t_words]).to(device)
+        save_clip_text_features(dual_encoder_model , s_text, s_text_save_name, batch_size)
+        save_clip_text_features(dual_encoder_model , t_text, t_text_save_name, batch_size)
         if not args.saved_features:
             save_clip_image_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
         
     elif args.dual_encoder =='internvid':
-        text = dual_encoder_model.text_encoder.tokenize(words, context_length=32).to(device)
-        save_internvid_text_features(dual_encoder_model , text, text_save_name, batch_size)
+        s_text = dual_encoder_model.text_encoder.tokenize(s_words, context_length=32).to(device)
+        t_text = dual_encoder_model.text_encoder.tokenize(t_words, context_length=32).to(device)
+        save_internvid_text_features(dual_encoder_model , s_text, s_text_save_name, batch_size)
+        save_internvid_text_features(dual_encoder_model , t_text, t_text_save_name, batch_size)
         if not args.saved_features:
-            save_internvid_video_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args) if num_tasks==1 else save_internvid_video_features_multinode(model=dual_encoder_model_ddp, model_without_ddp=model_without_ddp,dataset=None,data_loader=data_loader_c, save_name=clip_save_name, batch_size=batch_size, device=device,args=args)
+            save_internvid_video_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
             
     if args.saved_features:# 이 아래는 saved_feature이면 안해도됌.
         return
@@ -174,7 +150,7 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
     if target_name.startswith("clip_"):
         save_clip_image_features(target_model, data_t, target_save_name, batch_size, device,args)
     elif target_name.startswith("vmae_") or target_name=='AIM':
-        save_vmae_video_features(target_model,data_t,target_save_name,batch_size,device,args) if num_tasks==1  else save_vmae_video_features_multinode(model=target_model_ddp, model_without_ddp=target_model_without_ddp,dataset=None,data_loader=data_loader_t, save_name=target_save_name, batch_size=batch_size, device=device,args=args) 
+        save_vmae_video_features(target_model,data_t,target_save_name,batch_size,device,args)
     else:
         save_target_activations(target_model, data_t, target_save_name, target_layers,
                                 batch_size, device, pool_mode)
@@ -226,17 +202,19 @@ def get_activation(outputs, mode):
 
     
 def get_save_names(clip_name, target_name, target_layer, d_probe, concept_set, pool_mode, save_dir):
-    
+    s_concept, t_concept = concept_set    
     # if target_name.startswith("clip_"):
     target_save_name = "{}/{}_{}.pt".format(save_dir, d_probe, target_name.replace('/', ''))
     # else:
     #     target_save_name = "{}/{}_{}_{}{}.pt".format(save_dir, d_probe, target_name, target_layer,
     #                                              PM_SUFFIX[pool_mode])
     clip_save_name = "{}/{}_{}.pt".format(save_dir, d_probe, clip_name.replace('/', ''))
-    concept_set_name = (concept_set.split("/")[-1]).split(".")[0]
-    text_save_name = "{}/{}_{}.pt".format(save_dir, concept_set_name, clip_name.replace('/', ''))
+    s_concept_set_name = (s_concept.split("/")[-1]).split(".")[0]
+    t_concept_set_name = (t_concept.split("/")[-1]).split(".")[0]
+    s_text_save_name = "{}/{}_{}.pt".format(save_dir, s_concept_set_name, clip_name.replace('/', ''))
+    t_text_save_name = "{}/{}_{}.pt".format(save_dir, t_concept_set_name, clip_name.replace('/', ''))
     
-    return target_save_name, clip_save_name, text_save_name
+    return target_save_name, clip_save_name, s_text_save_name, t_text_save_name
 
     
 def _all_saved(save_names):
