@@ -1,3 +1,4 @@
+import cbm
 import torch
 import os
 import random
@@ -19,6 +20,9 @@ def spatio_temporal_parallel(args,
                             val_target_features,
                             s_clip_features,
                             s_val_clip_features,
+                            t_concepts,
+                            t_clip_features,
+                            t_val_clip_features,
                             save_name):
     save_spatial = os.path.join(save_name,'spatial')
     save_temporal = os.path.join(save_name,'temporal')
@@ -59,15 +63,90 @@ def spatio_temporal_parallel(args,
                                val_target_features=val_target_features,
                                 save_name=save_temporal
                                )
+    with open(os.path.join(save_name, "args.txt"), 'w') as f:
+        json.dump(args.__dict__, f, indent=2)
+    d_val = args.data_set + "_val"
+    val_data_t = data_utils.get_data(d_val,args=args)
+    device = torch.device(args.device)
+    
+    s_model,t_model = cbm.load_cbm_two_stream(save_name, device,args)
 
+    accuracy = cbm_utils.get_accuracy_cbm(s_model, val_data_t, device,32,8)
+    print("?****? Spatio Accuracy: {:.2f}%".format(accuracy*100))
+    
+    accuracy = cbm_utils.get_accuracy_cbm(t_model, val_data_t, device,32,8)
+    print("!****! Temporal Accuracy: {:.2f}%".format(accuracy*100))
     
     return
 
 
+def spatio_temporal_serial(args,
+                            s_concepts,
+                            target_features,
+                            val_target_features,
+                            s_clip_features,
+                            s_val_clip_features,
+                            t_concepts,
+                            t_clip_features,
+                            t_val_clip_features,
+                            save_name):
+    save_spatial = os.path.join(save_name,'spatial')
+    save_temporal = os.path.join(save_name,'temporal')
+    save_classification = os.path.join(save_name,'classification')
+    os.mkdir(save_spatial)
+    os.mkdir(save_temporal)
+    os.mkdir(save_classification)
+    s_W_c,s_concepts = train_cocept_layer(args,
+                               s_concepts,
+                               target_features,
+                               val_target_features,
+                               s_clip_features,
+                               s_val_clip_features,
+                               save_spatial)
+    proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(s_concepts), bias=False)
+    proj_layer.load_state_dict({"weight":s_W_c})
+    s_target_features = proj_layer(target_features.detach())
+    s_val_target_features = proj_layer(val_target_features.detach())
+    s_train_mean = torch.mean(s_target_features, dim=0, keepdim=True)
+    s_train_std = torch.std(s_target_features, dim=0, keepdim=True)
+    s_target_features -= s_train_mean
+    s_target_features /= s_train_std
+    s_val_target_features -= s_train_mean
+    s_val_target_features /= s_train_std
+    torch.save(s_train_mean, os.path.join(save_name,'temporal', "proj_mean.pt"))
+    torch.save(s_train_std, os.path.join(save_name,'temporal', "proj_std.pt"))
+    t_W_c,t_concepts = train_cocept_layer(args,
+                               t_concepts,
+                               s_target_features,
+                               s_val_target_features,
+                               t_clip_features,
+                               t_val_clip_features,
+                               save_temporal)
+
+    del s_clip_features, s_val_clip_features,t_clip_features, t_val_clip_features
+    
 
 
 
+    train_classification_layer(args,
+                               W_c=t_W_c,
+                               pre_concepts=s_concepts,
+                               concepts = t_concepts,
+                               target_features=s_target_features,
+                               val_target_features=s_val_target_features,
+                                save_name=save_classification
+                               )
+    with open(os.path.join(save_name, "args.txt"), 'w') as f:
+        json.dump(args.__dict__, f, indent=2)
+    d_val = args.data_set + "_val"
+    val_data_t = data_utils.get_data(d_val,args=args)
+    device = torch.device(args.device)
+    
+    model = cbm.load_cbm_serial(save_name, device,args)
 
+    accuracy = cbm_utils.get_accuracy_cbm(model, val_data_t, device,32,8)
+    print("?****? Accuracy: {:.2f}%".format(accuracy*100))
+    
 def train_cocept_layer(args,concepts, target_features,val_target_features,clip_feature,val_clip_features,save_name):
     similarity_fn = similarity.cos_similarity_cubed_single
     proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(concepts),
@@ -135,8 +214,8 @@ def train_cocept_layer(args,concepts, target_features,val_target_features,clip_f
 
 
 
-def train_classification_layer(args,W_c,concepts, target_features,val_target_features,save_name):
-    proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(concepts), bias=False)
+def train_classification_layer(args,W_c,pre_concepts,concepts, target_features,val_target_features,save_name):
+    proj_layer = torch.nn.Linear(in_features=len(pre_concepts), out_features=len(concepts), bias=False)
     proj_layer.load_state_dict({"weight":W_c})
     d_train = args.data_set + "_train"
     d_val = args.data_set + "_val"

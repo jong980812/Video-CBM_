@@ -13,7 +13,7 @@ from glm_saga.elasticnet import IndexedTensorDataset, glm_saga
 from torch.utils.data import DataLoader, TensorDataset
 import video_utils
 import torch.distributed as dist
-from learning_concept_layer import spatio_temporal_parallel
+from learning_concept_layer import spatio_temporal_parallel,spatio_temporal_serial
 
 parser = argparse.ArgumentParser(description='Settings for creating CBM')
 # parser.add_argument('--batch_size', default=64, type=int)
@@ -210,7 +210,7 @@ parser.add_argument('--dual_encoder', default='clip', choices=['clip', 'lavila',
                     type=str, help='dataset')
 parser.add_argument('--dual_encoder_frames',type=int,default=16)
 parser.add_argument('--lavila_ckpt',type=str,default=None)
-
+parser.add_argument('--train_mode',type=str,default='para')
 
 def train_cbm_and_save(args):
     video_utils.init_distributed_mode(args)
@@ -334,17 +334,27 @@ def train_cbm_and_save(args):
     #learn projection layer
     save_name = "{}/{}_cbm_{}".format(args.save_dir, args.data_set, datetime.datetime.now().strftime("%Y_%m_%d_%H_%M"))
     os.mkdir(save_name)
-    save_spatial = os.path.join(save_name,'spatial')
-    save_temporal = os.path.join(save_name,'temporal')
-    os.mkdir(save_spatial)
-    os.mkdir(save_temporal)
+    # save_spatial = os.path.join(save_name,'spatial')
+    # save_temporal = os.path.join(save_name,'temporal')
+
     
     #!
     #target_feat -> Backbone feat
     #clip_feat -> dual encoder feat
     #!
-    
-    spatio_temporal_parallel(args,
+    if args.train_mode=='serial':
+        spatio_temporal_serial(args,
+                            s_concepts,
+                            target_features,
+                            val_target_features,
+                            s_clip_features,
+                            s_val_clip_features,
+                            t_concepts,
+                            t_clip_features,
+                            t_val_clip_features,
+                            save_name)
+    else:
+        spatio_temporal_parallel(args,
                             s_concepts,
                             target_features,
                             val_target_features,
@@ -389,16 +399,16 @@ def train_cbm_and_save(args):
 
     
     
-    with open(os.path.join(save_name, "args.txt"), 'w') as f:
-        json.dump(args.__dict__, f, indent=2)
-    val_data_t = data_utils.get_data(d_val,args=args)
-    s_model,t_model = cbm.load_cbm_two_stream(save_name, device,args)
+    # with open(os.path.join(save_name, "args.txt"), 'w') as f:
+    #     json.dump(args.__dict__, f, indent=2)
+    # val_data_t = data_utils.get_data(d_val,args=args)
+    # s_model,t_model = cbm.load_cbm_two_stream(save_name, device,args)
 
-    accuracy = cbm_utils.get_accuracy_cbm(s_model, val_data_t, device,32,8)
-    print("?****? Spatio Accuracy: {:.2f}%".format(accuracy*100))
+    # accuracy = cbm_utils.get_accuracy_cbm(s_model, val_data_t, device,32,8)
+    # print("?****? Spatio Accuracy: {:.2f}%".format(accuracy*100))
     
-    accuracy = cbm_utils.get_accuracy_cbm(t_model, val_data_t, device,32,8)
-    print("!****! Temporal Accuracy: {:.2f}%".format(accuracy*100))
+    # accuracy = cbm_utils.get_accuracy_cbm(t_model, val_data_t, device,32,8)
+    # print("!****! Temporal Accuracy: {:.2f}%".format(accuracy*100))
 
 if __name__=='__main__':
     args = parser.parse_args()
