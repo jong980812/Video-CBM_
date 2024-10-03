@@ -1,4 +1,3 @@
-adult
 airplane
 amplifier
 apple

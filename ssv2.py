@@ -268,8 +268,9 @@ class SSVideoClsDataset(Dataset):
         average_duration = len(vr) // self.num_segment
         all_index = []
         if average_duration > 0:
-            all_index += list(np.multiply(list(range(self.num_segment)), average_duration) + np.random.randint(average_duration,
-                                                                                                        size=self.num_segment))
+            # all_index += list(np.multiply(list(range(self.num_segment)), average_duration) + np.random.randint(average_duration,
+            #                                                                                             size=self.num_segment))
+            all_index += list(np.multiply(list(range(self.num_segment)), average_duration))
         elif len(vr) > self.num_segment:
             all_index += list(np.sort(np.random.randint(len(vr), size=self.num_segment)))
         else:

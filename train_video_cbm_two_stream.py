@@ -1,5 +1,6 @@
 import torch
 import os
+import cbm
 import random
 import cbm_utils
 import data_utils
@@ -12,7 +13,7 @@ from glm_saga.elasticnet import IndexedTensorDataset, glm_saga
 from torch.utils.data import DataLoader, TensorDataset
 import video_utils
 import torch.distributed as dist
-from learning_concept_layer import train_cocept_layer,train_classification_layer
+from learning_concept_layer import spatio_temporal_parallel
 
 parser = argparse.ArgumentParser(description='Settings for creating CBM')
 # parser.add_argument('--batch_size', default=64, type=int)
@@ -79,7 +80,7 @@ parser.add_argument('--num_sample', type=int, default=1,
                     help='Repeated_aug (default: 2)')
 parser.add_argument('--aa', type=str, default='rand-m7-n4-mstd0.5-inc1', metavar='NAME',
                     help='Use AutoAugment policy. "v0" or "original". " + "(default: rand-m7-n4-mstd0.5-inc1)'),
-parser.add_argument('--smoothing', type=float, default=0.1,
+parser.add_argument('--smoothing', type=float, default=0.0,
                     help='Label smoothing (default: 0.1)')
 parser.add_argument('--train_interpolation', type=str, default='bicubic',
                     help='Training interpolation (random, bilinear, bicubic default: "bicubic")')
@@ -91,11 +92,11 @@ parser.add_argument('--test_num_segment', type=int, default=5)
 parser.add_argument('--test_num_crop', type=int, default=3)
 
 # Random Erase params
-parser.add_argument('--reprob', type=float, default=0.25, metavar='PCT',
+parser.add_argument('--reprob', type=float, default=0.0, metavar='PCT',
                     help='Random erase prob (default: 0.25)')
 parser.add_argument('--remode', type=str, default='pixel',
                     help='Random erase mode (default: "pixel")')
-parser.add_argument('--recount', type=int, default=1,
+parser.add_argument('--recount', type=int, default=0,
                     help='Random erase count (default: 1)')
 parser.add_argument('--resplit', action='store_true', default=False,
                     help='Do not random erase first (clean) augmentation split')
@@ -331,7 +332,6 @@ def train_cbm_and_save(args):
     t_val_clip_features = t_val_clip_features[:, t_highest>args.clip_cutoff]
     #! Learning Concept Layer
     #learn projection layer
-    # explained model feature to concept layer
     save_name = "{}/{}_cbm_{}".format(args.save_dir, args.data_set, datetime.datetime.now().strftime("%Y_%m_%d_%H_%M"))
     os.mkdir(save_name)
     save_spatial = os.path.join(save_name,'spatial')
@@ -339,45 +339,66 @@ def train_cbm_and_save(args):
     os.mkdir(save_spatial)
     os.mkdir(save_temporal)
     
-    s_W_c,s_concepts = train_cocept_layer(args,
-                               s_concepts,
-                               target_features,
-                               val_target_features,
-                               s_clip_features,
-                               s_val_clip_features,
-                               save_spatial)
-    t_W_c,t_concepts = train_cocept_layer(args,
-                               t_concepts,
-                               target_features,
-                               val_target_features,
-                               t_clip_features,
-                               t_val_clip_features,
-                               save_temporal)
+    #!
+    #target_feat -> Backbone feat
+    #clip_feat -> dual encoder feat
+    #!
+    
+    spatio_temporal_parallel(args,
+                            s_concepts,
+                            target_features,
+                            val_target_features,
+                            s_clip_features,
+                            s_val_clip_features,
+                            save_name)
+    # s_W_c,s_concepts = train_cocept_layer(args,
+    #                            s_concepts,
+    #                            target_features,
+    #                            val_target_features,
+    #                            s_clip_features,
+    #                            s_val_clip_features,
+    #                            save_spatial)
+    # t_W_c,t_concepts = train_cocept_layer(args,
+    #                            t_concepts,
+    #                            target_features,
+    #                            val_target_features,
+    #                            t_clip_features,
+    #                            t_val_clip_features,
+    #                            save_temporal)
 
     
-    del s_clip_features, s_val_clip_features,t_clip_features, t_val_clip_features
+    # del s_clip_features, s_val_clip_features,t_clip_features, t_val_clip_features
     
 
-    train_classification_layer(args,
-                               W_c=s_W_c,
-                               concepts = s_concepts,
-                               target_features=target_features,
-                               val_target_features=val_target_features,
-                                save_name=save_spatial
-                               )
-    train_classification_layer(args,
-                               W_c=t_W_c,
-                               concepts = t_concepts,
-                               target_features=target_features,
-                               val_target_features=val_target_features,
-                                save_name=save_temporal
-                               )
+
+
+    # train_classification_layer(args,
+    #                            W_c=s_W_c,
+    #                            concepts = s_concepts,
+    #                            target_features=target_features,
+    #                            val_target_features=val_target_features,
+    #                             save_name=save_spatial
+    #                            )
+    # train_classification_layer(args,
+    #                            W_c=t_W_c,
+    #                            concepts = t_concepts,
+    #                            target_features=target_features,
+    #                            val_target_features=val_target_features,
+    #                             save_name=save_temporal
+    #                            )
 
     
     
     with open(os.path.join(save_name, "args.txt"), 'w') as f:
         json.dump(args.__dict__, f, indent=2)
+    val_data_t = data_utils.get_data(d_val,args=args)
+    s_model,t_model = cbm.load_cbm_two_stream(save_name, device,args)
+
+    accuracy = cbm_utils.get_accuracy_cbm(s_model, val_data_t, device,32,8)
+    print("?****? Spatio Accuracy: {:.2f}%".format(accuracy*100))
     
+    accuracy = cbm_utils.get_accuracy_cbm(t_model, val_data_t, device,32,8)
+    print("!****! Temporal Accuracy: {:.2f}%".format(accuracy*100))
 
 if __name__=='__main__':
     args = parser.parse_args()

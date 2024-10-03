@@ -13,6 +13,61 @@ from torch.utils.data import DataLoader, TensorDataset
 import video_utils
 import torch.distributed as dist
 
+def spatio_temporal_parallel(args,
+                            s_concepts,
+                            target_features,
+                            val_target_features,
+                            s_clip_features,
+                            s_val_clip_features,
+                            save_name):
+    save_spatial = os.path.join(save_name,'spatial')
+    save_temporal = os.path.join(save_name,'temporal')
+    os.mkdir(save_spatial)
+    os.mkdir(save_temporal)
+    s_W_c,s_concepts = train_cocept_layer(args,
+                               s_concepts,
+                               target_features,
+                               val_target_features,
+                               s_clip_features,
+                               s_val_clip_features,
+                               save_spatial)
+    t_W_c,t_concepts = train_cocept_layer(args,
+                               t_concepts,
+                               target_features,
+                               val_target_features,
+                               t_clip_features,
+                               t_val_clip_features,
+                               save_temporal)
+
+    
+    del s_clip_features, s_val_clip_features,t_clip_features, t_val_clip_features
+    
+
+
+
+    train_classification_layer(args,
+                               W_c=s_W_c,
+                               concepts = s_concepts,
+                               target_features=target_features,
+                               val_target_features=val_target_features,
+                                save_name=save_spatial
+                               )
+    train_classification_layer(args,
+                               W_c=t_W_c,
+                               concepts = t_concepts,
+                               target_features=target_features,
+                               val_target_features=val_target_features,
+                                save_name=save_temporal
+                               )
+
+    
+    return
+
+
+
+
+
+
 def train_cocept_layer(args,concepts, target_features,val_target_features,clip_feature,val_clip_features,save_name):
     similarity_fn = similarity.cos_similarity_cubed_single
     proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(concepts),
@@ -76,6 +131,8 @@ def train_cocept_layer(args,concepts, target_features,val_target_features,clip_f
         for concept in concepts[1:]:
             f.write('\n'+concept)
     return W_c,concepts
+
+
 
 
 def train_classification_layer(args,W_c,concepts, target_features,val_target_features,save_name):

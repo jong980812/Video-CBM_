@@ -134,10 +134,26 @@ def get_target_model(target_name, device,args=None):
                 args=args
             )
         checkpoint = torch.load(args.finetune,'cpu')
-        checkpoint = checkpoint['module']
-        preprocess=None
-        print(target_model.load_state_dict(checkpoint))
-        print('AIM succesfully is loaded')
+        # checkpoint = checkpoint['module']
+        if args.data_set=='kinetics400':
+            all_keys = list(checkpoint.keys())
+            new_dict = OrderedDict()
+            for key in all_keys:
+                if key.startswith('backbone.'):
+                    new_dict[key[9:]] = checkpoint[key]
+                elif key.startswith('cls_head'):
+                    new_dict['head'+key[15:]] = checkpoint[key]
+                else:
+                    new_dict[key] = checkpoint[key]
+            preprocess=None
+            print(target_model.load_state_dict(new_dict))
+            print('AIM succesfully is loaded')
+        else:
+            preprocess=None
+            checkpoint = checkpoint['module']
+            print(target_model.load_state_dict(checkpoint))
+            print('AIM succesfully is loaded')
+            
         target_model.to(device)
     elif target_name == 'resnet18_places': 
         target_model = models.resnet18(pretrained=False, num_classes=365).to(device)

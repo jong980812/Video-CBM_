@@ -59,7 +59,7 @@ def build_dataset(is_train, test_mode, args):
         mode = None
         anno_path = None
         if is_train is True:
-            mode = 'train'
+            mode = 'validation'
             anno_path = os.path.join(args.video_anno_path, 'train.csv')
         elif test_mode is True:
             mode = 'validation'
@@ -89,7 +89,7 @@ def build_dataset(is_train, test_mode, args):
         mode = None
         anno_path = None
         if is_train is True:
-            mode = 'train'
+            mode = 'validation'
             anno_path = os.path.join(args.video_anno_path, 'train.csv')
         elif test_mode is True:
             mode = 'validation'
@@ -120,7 +120,7 @@ def build_dataset(is_train, test_mode, args):
         mode = None
         anno_path = None
         if is_train is True:
-            mode = 'train'
+            mode = 'validation'
             anno_path = os.path.join(args.video_anno_path, 'train.csv')
         elif test_mode is True:
             mode = 'test'
@@ -149,7 +149,7 @@ def build_dataset(is_train, test_mode, args):
         mode = None
         anno_path = None
         if is_train is True:
-            mode = 'train'
+            mode = 'validation'
             anno_path = os.path.join(args.video_anno_path, 'train.csv')
         elif test_mode is True:
             mode = 'test'
@@ -178,7 +178,7 @@ def build_dataset(is_train, test_mode, args):
         mode = None
         anno_path = None
         if is_train is True:
-            mode = 'train'
+            mode = 'validation'
             anno_path = os.path.join(args.video_anno_path, 'train.csv')
         elif test_mode is True:
             mode = 'test'
@@ -209,7 +209,7 @@ def build_dataset(is_train, test_mode, args):
         mode = None
         anno_path = None
         if is_train is True:
-            mode = 'train'
+            mode = 'validation'
             anno_path = os.path.join(args.data_path, 'train.csv')
         elif test_mode is True:
             mode = 'test'
