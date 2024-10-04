@@ -51,6 +51,7 @@ def spatio_temporal_parallel(args,
 
     train_classification_layer(args,
                                W_c=s_W_c,
+                               pre_concepts=None,
                                concepts = s_concepts,
                                target_features=target_features,
                                val_target_features=val_target_features,
@@ -58,6 +59,7 @@ def spatio_temporal_parallel(args,
                                )
     train_classification_layer(args,
                                W_c=t_W_c,
+                               pre_concepts=None,
                                concepts = t_concepts,
                                target_features=target_features,
                                val_target_features=val_target_features,
@@ -71,11 +73,13 @@ def spatio_temporal_parallel(args,
     
     s_model,t_model = cbm.load_cbm_two_stream(save_name, device,args)
 
-    accuracy = cbm_utils.get_accuracy_cbm(s_model, val_data_t, device,32,8)
-    print("?****? Spatio Accuracy: {:.2f}%".format(accuracy*100))
+    print("!****! Start test Spatio")
+    accuracy = cbm_utils.get_accuracy_cbm(s_model, val_data_t, device,32,10)
+    print("!****! Spatio Accuracy: {:.2f}%".format(accuracy*100))
     
-    accuracy = cbm_utils.get_accuracy_cbm(t_model, val_data_t, device,32,8)
-    print("!****! Temporal Accuracy: {:.2f}%".format(accuracy*100))
+    print("?***? Start test Temporal")
+    accuracy = cbm_utils.get_accuracy_cbm(t_model, val_data_t, device,32,10)
+    print("?****? Temporal Accuracy: {:.2f}%".format(accuracy*100))
     
     return
 
@@ -143,10 +147,15 @@ def spatio_temporal_serial(args,
     device = torch.device(args.device)
     
     model = cbm.load_cbm_serial(save_name, device,args)
-
-    accuracy = cbm_utils.get_accuracy_cbm(model, val_data_t, device,32,8)
-    print("?****? Accuracy: {:.2f}%".format(accuracy*100))
     
+    print("?****? Start test")
+    accuracy = cbm_utils.get_accuracy_cbm(model, val_data_t, device,32,10)
+    print("?****? Accuracy: {:.2f}%".format(accuracy*100))
+
+def spatio_temporal_attention():
+    pass
+
+
 def train_cocept_layer(args,concepts, target_features,val_target_features,clip_feature,val_clip_features,save_name):
     similarity_fn = similarity.cos_similarity_cubed_single
     proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(concepts),
@@ -187,7 +196,7 @@ def train_cocept_layer(args,concepts, target_features,val_target_features,clip_f
                 break
         opt.zero_grad()
     proj_layer.load_state_dict({"weight":best_weights})
-    print("Best step:{}, Avg val similarity:{:.4f}".format(best_step, -best_val_loss.cpu()))
+    print("**Best step:{}, Avg val similarity:{:.4f}".format(best_step, -best_val_loss.cpu()))
 
     #delete concepts that are not interpretable
     with torch.no_grad():
@@ -215,7 +224,7 @@ def train_cocept_layer(args,concepts, target_features,val_target_features,clip_f
 
 
 def train_classification_layer(args,W_c,pre_concepts,concepts, target_features,val_target_features,save_name):
-    proj_layer = torch.nn.Linear(in_features=len(pre_concepts), out_features=len(concepts), bias=False)
+    proj_layer = torch.nn.Linear(in_features=len(pre_concepts) if args.train_mode=='serial' else target_features.shape[1], out_features=len(concepts), bias=False)
     proj_layer.load_state_dict({"weight":W_c})
     d_train = args.data_set + "_train"
     d_val = args.data_set + "_val"

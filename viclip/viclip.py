@@ -125,7 +125,7 @@ class ViCLIP(nn.Module):
             loss_vtc=loss_vtc,
         )
 
-    def encode_vision(self, image, test=False):
+    def encode_vision(self, image, test=True):
         """encode image / videos as features.
 
         Args:

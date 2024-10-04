@@ -211,6 +211,7 @@ parser.add_argument('--dual_encoder', default='clip', choices=['clip', 'lavila',
 parser.add_argument('--dual_encoder_frames',type=int,default=16)
 parser.add_argument('--lavila_ckpt',type=str,default=None)
 parser.add_argument('--train_mode',type=str,default='para')
+parser.add_argument('--internvid_version',type=str,default='200m')
 
 def train_cbm_and_save(args):
     video_utils.init_distributed_mode(args)
@@ -298,19 +299,19 @@ def train_cbm_and_save(args):
     if args.print:
         for i, concept in enumerate(s_concepts):
             if s_highest[i]<=args.clip_cutoff:
-                print("**Spatial** Deleting {}, CLIP top5:{:.3f}".format(concept, s_highest[i]))
+                print("!**Spatial** Deleting {}, CLIP top5:{:.3f}".format(concept, s_highest[i]))
 
     original_n_concept = len(s_concepts)
     s_concepts = [s_concepts[i] for i in range(len(s_concepts)) if s_highest[i]>args.clip_cutoff]
-    print(f"**Spatial** Num concept {len(s_concepts)} from {original_n_concept}")
+    print(f"!**Spatial** Num concept {len(s_concepts)} from {original_n_concept}")
     if args.print:
         for i, concept in enumerate(t_concepts):
             if t_highest[i]<=args.clip_cutoff:
-                print("**Temporal** Deleting {}, CLIP top5:{:.3f}".format(concept, t_highest[i]))
+                print("?**Temporal** Deleting {}, CLIP top5:{:.3f}".format(concept, t_highest[i]))
 
     original_n_concept = len(t_concepts)
     t_concepts = [t_concepts[i] for i in range(len(t_concepts)) if t_highest[i]>args.clip_cutoff]
-    print(f"**Temporal** Num concept {len(t_concepts)} from {original_n_concept}")
+    print(f"?**Temporal** Num concept {len(t_concepts)} from {original_n_concept}")
     
     #save memory by recalculating
     del s_clip_features, t_clip_features
@@ -353,6 +354,9 @@ def train_cbm_and_save(args):
                             t_clip_features,
                             t_val_clip_features,
                             save_name)
+    elif args.train_mode =='attention':
+        # spatio_temporal_attention()
+        pass
     else:
         spatio_temporal_parallel(args,
                             s_concepts,
@@ -360,6 +364,9 @@ def train_cbm_and_save(args):
                             val_target_features,
                             s_clip_features,
                             s_val_clip_features,
+                            t_concepts,
+                            t_clip_features,
+                            t_val_clip_features,
                             save_name)
     # s_W_c,s_concepts = train_cocept_layer(args,
     #                            s_concepts,

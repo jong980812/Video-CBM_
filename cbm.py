@@ -7,6 +7,7 @@ class CBM_model(torch.nn.Module):
     def __init__(self, backbone_name, W_c, W_g, b_g, proj_mean, proj_std, device="cuda",args=None):
         super().__init__()
         model, _ = data_utils.get_target_model(backbone_name, device,args)
+        model.eval()
         #remove final fully connected layer
         if "clip" in backbone_name:
             self.backbone = model
@@ -159,4 +160,5 @@ def load_std(load_dir, device):
     proj_std = torch.load(os.path.join(load_dir, "proj_std.pt"), map_location=device)
 
     model = standard_model(args['backbone'], W_g, b_g, proj_mean, proj_std, device)
+    model.eval()
     return model

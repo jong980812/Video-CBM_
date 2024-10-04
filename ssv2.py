@@ -131,8 +131,7 @@ class SSVideoClsDataset(Dataset):
             buffer = self.data_transform(buffer)
             if self.center_frame:
                 buffer = buffer[:,self.clip_len//2,:,:]
-            if self.get_sample_path:
-                return buffer, self.label_array[index], sample
+                return buffer,self.label_array[index],sample
             return buffer, self.label_array[index]#, sample.split("/")[-1].split(".")[0]
 
         elif self.mode == 'test':

@@ -5,40 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Current File",
-            "type": "debugpy",
-            "request": "launch",
-            "console": "integratedTerminal",
-            "module": "torch.distributed.launch",
-            "args": [
-                "--nproc_per_node", "1",
-                "--master_port", "3333",
-                "/data/jong980812/project/Video-CBM/train_video_cbm_space_time.py",
-                "--data_set","SSV2", // Video
-                "--nb_classes","174",
-                "--concept_set","/data/jong980812/project/Video-CBM/data/concept_sets/ssv2_ost_spatio_concepts.txt",
-                // "--t_concept_set","/data/jong980812/project/Video-CBM/data/concept_sets/ssv2_ost_temporal_concepts.txt",
-                // "--t_text_save_name","/data/jong980812/project/Video-CBM_backup/results/ssv2/finetune_internvid_ost_temporal/activation/ssv2_ost_temporal_concepts_ViT-B16.pt",
-                "--batch_size","48",
-                "--video-anno-path","data/video_annotation/ssv2",
-                "--data_path","/local_datasets/something-something/something-something-v2-mp4",
-                // "--data_path","/local_datasets/something-something/something-something-v2-mp4",
-                "--print",
-                "--activation_dir","/data/jong980812/project/Video-CBM/results/origin_ssv2/finetune_internvid_ost_temporal/activation",
-                "--save_dir","/data/jong980812/project/Video-CBM/results/origin_ssv2/finetune_internvid_ost_temporal/activation",
-                "--proj_steps","2000",
-                "--n_iters","2000",
-                "--interpretability_cutoff","0.0",
-                "--clip_cutoff","0.0",
-                "--backbone","vmae_vit_base_patch16_224",
-                "--finetune","/data/datasets/video_checkpoint/ssv2/ssv2_finetune.pth",
-                "--dual_encoder","internvid",
-                "--lavila_ckpt","/data/datasets/video_checkpoint/lavila_TSF_B.pth",
-                "--proj_steps","500"
-
-            ]
-        },
-        {
             "name": "train_cbm",
             "type": "debugpy",
             "request": "launch",
@@ -48,8 +14,8 @@
                 "--nproc_per_node", "1",
                 "--master_port", "3333",
                 "/data/jong980812/project/Video-CBM-two-stream/train_video_cbm_two_stream.py",
-                "--data_set","kinetics100", // Video
-                "--nb_classes","100",
+                "--data_set","kinetics400", // Video
+                "--nb_classes","400",
                 "--s_concept_set","/data/jong980812/project/Video-CBM-two-stream/data/concept_sets/llava_ver2/k100_spatio_concepts_ver2.txt",
                 "--t_concept_set","/data/jong980812/project/Video-CBM-two-stream/data/concept_sets/llava_ver2/k100_temporal_concepts_ver2.txt",
                 // "--t_concept_set","/data/jong980812/project/Video-CBM/data/concept_sets/ssv2_ost_temporal_concepts.txt",
@@ -65,11 +31,11 @@
                 "--n_iters","2000",
                 "--interpretability_cutoff","0.2",
                 "--backbone","AIM",
-                "--finetune","/data/jong980812/project/VideoMAE/result/aim_k100/OUT/checkpoint-best/mp_rank_00_model_states.pt",
-                "--dual_encoder","internvid",
+                "--finetune","/data/datasets/video_checkpoint/kinetics400/AIM_finetune.pth",
+                "--dual_encoder","lavila",
                 "--lavila_ckpt","/data/datasets/video_checkpoint/lavila_TSF_B.pth",
                 "--proj_steps","500",
-                "--saved_features"
+                // "--saved_features"
 
             ]
         }

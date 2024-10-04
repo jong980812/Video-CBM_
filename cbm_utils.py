@@ -70,7 +70,29 @@ def save_clip_image_features(model, dataset, save_name, batch_size=1000 , device
     del all_features
     torch.cuda.empty_cache()
     return
+def save_lavila_video_features(model, dataset, save_name, batch_size=1000 , device = "cuda",args = None):
+    _make_save_dir(save_name)
+    all_features = []
 
+    if os.path.exists(save_name):
+        return
+    
+    save_dir = save_name[:save_name.rfind("/")]
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    with torch.no_grad():
+        for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=8, pin_memory=True)):
+            # t = (images.shape)[2]
+            # if args.center_frame:
+            #     images = images.squeeze(2)
+            features = model.encode_image(images.to(device))# B, D
+            all_features.append(features.cpu())
+
+    torch.save(torch.cat(all_features), save_name)
+    #free memory
+    del all_features
+    torch.cuda.empty_cache()
+    return
 def save_clip_text_features(model, text, save_name, batch_size=1000):
     
     if os.path.exists(save_name):
@@ -128,14 +150,20 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
     with open(t_concept_set, 'r') as f: 
         t_words = (f.read()).split('\n')
     
-    if not args.dual_encoder =='internvid':
+    if args.dual_encoder =='clip':
         s_text = clip.tokenize(["{}".format(word) for word in s_words]).to(device)
         t_text = clip.tokenize(["{}".format(word) for word in t_words]).to(device)
         save_clip_text_features(dual_encoder_model , s_text, s_text_save_name, batch_size)
         save_clip_text_features(dual_encoder_model , t_text, t_text_save_name, batch_size)
         if not args.saved_features:
             save_clip_image_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
-        
+    elif args.dual_encoder =='lavila':
+        s_text = clip.tokenize(["{}".format(word) for word in s_words]).to(device)
+        t_text = clip.tokenize(["{}".format(word) for word in t_words]).to(device)
+        save_clip_text_features(dual_encoder_model , s_text, s_text_save_name, batch_size)
+        save_clip_text_features(dual_encoder_model , t_text, t_text_save_name, batch_size)
+        if not args.saved_features:
+            save_lavila_video_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
     elif args.dual_encoder =='internvid':
         s_text = dual_encoder_model.text_encoder.tokenize(s_words, context_length=32).to(device)
         t_text = dual_encoder_model.text_encoder.tokenize(t_words, context_length=32).to(device)
@@ -238,10 +266,11 @@ def _make_save_dir(save_name):
         os.makedirs(save_dir)
     return
 
-def get_accuracy_cbm(model, dataset, device, batch_size=250, num_workers=2):
+def get_accuracy_cbm(model, dataset, device, batch_size=250, num_workers=10):
     correct = 0
     total = 0
-    for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=num_workers,
+    model.eval()
+    for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=10,
                                            pin_memory=True)):
         with torch.no_grad():
             #outs = target_model(images.to(device))
@@ -404,14 +433,14 @@ def get_intervid(args,device):
     },
     'viclip-b-internvid-10m-flt': {
         'size': 'b',
-        'pretrained': 'xxx/ViCLIP-B_InternVid-FLT-10M.pth',
+        'pretrained': '/data/datasets/video_checkpoint/ViCLIP-B_InternVid-FLT-10M.pth',
     },
     'viclip-b-internvid-200m': {
         'size': 'b',
         'pretrained': '/data/datasets/video_checkpoint/ViCLIP-B_InternVid-200M.pth',
     },
     }
-    cfg = model_cfgs['viclip-b-internvid-200m']
+    cfg = model_cfgs['viclip-b-internvid-200m'] if args.internvid_version=='200m' else model_cfgs['viclip-b-internvid-10m-flt']
     model_l = get_viclip(cfg['size'], cfg['pretrained'])
     assert(type(model_l)==dict and model_l['viclip'] is not None and model_l['tokenizer'] is not None)
     clip, tokenizer = model_l['viclip'], model_l['tokenizer']
