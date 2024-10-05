@@ -164,7 +164,7 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
         save_clip_text_features(dual_encoder_model , t_text, t_text_save_name, batch_size)
         if not args.saved_features:
             save_lavila_video_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
-    elif args.dual_encoder =='internvid':
+    elif 'internvid' in args.dual_encoder:
         s_text = dual_encoder_model.text_encoder.tokenize(s_words, context_length=32).to(device)
         t_text = dual_encoder_model.text_encoder.tokenize(t_words, context_length=32).to(device)
         save_internvid_text_features(dual_encoder_model , s_text, s_text_save_name, batch_size)
@@ -440,7 +440,7 @@ def get_intervid(args,device):
         'pretrained': '/data/datasets/video_checkpoint/ViCLIP-B_InternVid-200M.pth',
     },
     }
-    cfg = model_cfgs['viclip-b-internvid-200m'] if args.internvid_version=='200m' else model_cfgs['viclip-b-internvid-10m-flt']
+    cfg = model_cfgs['viclip-b-internvid-200m'] if '200m' in args.dual_encoder else model_cfgs['viclip-b-internvid-10m-flt']
     model_l = get_viclip(cfg['size'], cfg['pretrained'])
     assert(type(model_l)==dict and model_l['viclip'] is not None and model_l['tokenizer'] is not None)
     clip, tokenizer = model_l['viclip'], model_l['tokenizer']
