@@ -12,4 +12,5 @@ results/
 debug/
 *.sh
 result/
+temp_result/
 new_results/

@@ -42,6 +42,8 @@ def get_data(dataset_name, preprocess=None,args = None):
         data, _= build_dataset(is_train=True, test_mode=False, args=args)
     elif dataset_name == "UCF101_val":
         data, _= build_dataset(is_train=False, test_mode=False, args=args)
+    elif dataset_name == "UCF101_test":
+        data, _= build_dataset(is_train=False, test_mode=True, args=args)
     elif dataset_name == "SSV2_train":
         data, _= build_dataset(is_train=True, test_mode=False, args=args)
     elif dataset_name == "SSV2_val":
@@ -54,6 +56,8 @@ def get_data(dataset_name, preprocess=None,args = None):
         data, _= build_dataset(is_train=True, test_mode=False, args=args)
     elif dataset_name == "kinetics400_val":
         data, _= build_dataset(is_train=False, test_mode=False, args=args)
+    elif dataset_name == "kinetics400_test":
+        data, _= build_dataset(is_train=False, test_mode=True, args=args)
     elif dataset_name == "kinetics100_train":
         data, _= build_dataset(is_train=True, test_mode=False, args=args)
     elif dataset_name == "kinetics100_val":

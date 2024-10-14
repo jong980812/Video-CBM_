@@ -181,7 +181,7 @@ def build_dataset(is_train, test_mode, args):
             mode = 'validation'
             anno_path = os.path.join(args.video_anno_path, 'train.csv')
         elif test_mode is True:
-            mode = 'test'
+            mode = 'validation'
             anno_path = os.path.join(args.video_anno_path, 'test.csv') 
         else:  
             mode = 'validation'

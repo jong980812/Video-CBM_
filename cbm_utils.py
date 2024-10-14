@@ -128,7 +128,7 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
     elif args.dual_encoder == "clip":
         name = 'ViT-B/16'
         dual_encoder_model, clip_preprocess = clip.load(name, device=device)
-    elif args.dual_encoder == "internvid":
+    elif "internvid" in args.dual_encoder:
         dual_encoder_model, _ = get_intervid(args,device)
         clip_preprocess = None
         
@@ -527,3 +527,38 @@ def save_internvid_text_features(model, text, save_name, batch_size=1000):
     del text_features
     torch.cuda.empty_cache()
     return
+
+def analysis_backbone_dim(model,dataset,args,number_act=5,view_num=50):
+    import numpy as np
+    distribution = np.zeros(768, dtype=int)
+    for i in range(len(dataset)):
+        if i%100==0:
+            print(f'iteration ** {i}/{len(dataset)}')
+        # image,label ,path= val_pil_data[i]
+        x, _ = dataset[i]
+        x = x.unsqueeze(0).to(args.device)
+        backbone_feat,concept_activation,outputs = model.get_feature(x)
+        # outputs, _ = s_model(x)
+        _, top_classes = torch.topk(outputs[0], dim=0, k=2)
+        contributions = concept_activation[0]*model.final.weight[top_classes[0], :]
+        high_spatial_concept = torch.topk(contributions, dim=0, k=2)[1][0]
+        # top_logit_vals, top_classes = torch.topk(concept_activation[0], dim=0, k=5)
+        contributions = backbone_feat[0]*model.proj_layer.weight[high_spatial_concept, :]
+        _,top_dim = torch.topk(contributions, dim=0, k=number_act)
+        dims = top_dim.cpu().numpy()
+        distribution += np.bincount(dims, minlength=768)  # 분포 카운트 누적
+        sorted_indices = np.argsort(distribution)
+        N = view_num  # 예: 상위 10개, 하위 10개의 차원을 출력
+        bottom_N_indices = sorted_indices[:N]  # 하위 N개
+        top_N_indices = sorted_indices[-N:][::-1]  # 상위 N개 (큰 값부터 출력)
+
+        # 해당 차원의 활성화 횟수
+        bottom_N_values = distribution[bottom_N_indices]
+        top_N_values = distribution[top_N_indices]
+
+    # 결과 출력
+    print(f"Top {N} most activated dimensions: {top_N_indices}")
+    print(f"Activation counts for most activated dimensions: {top_N_values}\n")
+
+    print(f"Top {N} least activated dimensions: {bottom_N_indices}")
+    print(f"Activation counts for least activated dimensions: {bottom_N_values}")

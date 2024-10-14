@@ -27,7 +27,14 @@ class CBM_model(torch.nn.Module):
         self.final = torch.nn.Linear(in_features = W_g.shape[1], out_features=W_g.shape[0]).to(device)
         self.final.load_state_dict({"weight":W_g, "bias":b_g})
         self.concepts = None
+    def get_feature(self,x):
+        backbone_feat = self.backbone(x)
+        backbone_feat = torch.flatten(backbone_feat, 1)
+        x = self.proj_layer(backbone_feat)
+        proj_c = (x-self.proj_mean)/self.proj_std
+        final = self.final(proj_c)
         
+        return backbone_feat,proj_c,final
     def forward(self, x):
         x = self.backbone(x)
         x = torch.flatten(x, 1)
@@ -56,7 +63,7 @@ class CBM_model_serial(torch.nn.Module):
         self.post_proj_layer.load_state_dict({"weight":post_W_c})
             
         self.pre_proj_mean = pre_mean
-        self.pre_proj_std = post_std
+        self.pre_proj_std = pre_std
         
         self.post_proj_mean = post_mean
         self.post_proj_std = post_std
@@ -74,7 +81,7 @@ class CBM_model_serial(torch.nn.Module):
         post_proj_c = self.post_proj_layer(pre_proj_c)
         post_proj_c = (post_proj_c-self.post_proj_mean)/self.post_proj_std
         x = self.final(post_proj_c)
-        return x, post_proj_c
+        return x, pre_proj_c,post_proj_c
 class standard_model(torch.nn.Module):
     def __init__(self, backbone_name, W_g, b_g, proj_mean, proj_std, device="cuda"):
         super().__init__()
@@ -121,8 +128,8 @@ def load_cbm_serial(load_dir, device,argument):
 
     s_W_c = torch.load(os.path.join(load_dir,"spatial","W_c.pt"), map_location=device)
     t_W_c = torch.load(os.path.join(load_dir,"temporal","W_c.pt"), map_location=device)
-    W_g = torch.load(os.path.join(load_dir,"classfication", "W_g.pt"), map_location=device)
-    b_g = torch.load(os.path.join(load_dir,"classfication", "b_g.pt"), map_location=device)
+    W_g = torch.load(os.path.join(load_dir,"classification", "W_g.pt"), map_location=device)
+    b_g = torch.load(os.path.join(load_dir,"classification", "b_g.pt"), map_location=device)
 
     pre_proj_mean = torch.load(os.path.join(load_dir,'temporal' ,"proj_mean.pt"), map_location=device)
     pre_proj_std = torch.load(os.path.join(load_dir,'temporal', "proj_std.pt"), map_location=device)
@@ -162,3 +169,4 @@ def load_std(load_dir, device):
     model = standard_model(args['backbone'], W_g, b_g, proj_mean, proj_std, device)
     model.eval()
     return model
+

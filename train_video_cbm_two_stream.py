@@ -13,7 +13,7 @@ from glm_saga.elasticnet import IndexedTensorDataset, glm_saga
 from torch.utils.data import DataLoader, TensorDataset
 import video_utils
 import torch.distributed as dist
-from learning_concept_layer import spatio_temporal_parallel,spatio_temporal_serial
+from learning_concept_layer import spatio_temporal_parallel,spatio_temporal_serial, spatio_temporal_attention,spatio_temporal_joint
 
 parser = argparse.ArgumentParser(description='Settings for creating CBM')
 # parser.add_argument('--batch_size', default=64, type=int)
@@ -206,12 +206,13 @@ parser.add_argument('--video-anno-path',type=str)
 parser.add_argument('--center_frame',action='store_true')
 parser.add_argument('--no_aug',type=bool,default=False)
 parser.add_argument('--saved_features',action='store_true')
-parser.add_argument('--dual_encoder', default='clip', choices=['clip', 'lavila', 'internvid'],
+parser.add_argument('--dual_encoder', default='clip', choices=['clip', 'lavila', 'internvid','internvid_200m','internvid_10flt'],
                     type=str, help='dataset')
 parser.add_argument('--dual_encoder_frames',type=int,default=16)
 parser.add_argument('--lavila_ckpt',type=str,default=None)
 parser.add_argument('--train_mode',type=str,default='para')
 parser.add_argument('--internvid_version',type=str,default='200m')
+parser.add_argument('--only_s',action='store_true')
 
 def train_cbm_and_save(args):
     video_utils.init_distributed_mode(args)
@@ -356,7 +357,27 @@ def train_cbm_and_save(args):
                             save_name)
     elif args.train_mode =='attention':
         # spatio_temporal_attention()
-        pass
+        spatio_temporal_attention(args,
+                            s_concepts,
+                            target_features,
+                            val_target_features,
+                            s_clip_features,
+                            s_val_clip_features,
+                            t_concepts,
+                            t_clip_features,
+                            t_val_clip_features,
+                            save_name)
+    elif args.train_mode =='joint':
+        spatio_temporal_joint(args,
+                            s_concepts,
+                            target_features,
+                            val_target_features,
+                            s_clip_features,
+                            s_val_clip_features,
+                            t_concepts,
+                            t_clip_features,
+                            t_val_clip_features,
+                            save_name)
     else:
         spatio_temporal_parallel(args,
                             s_concepts,
@@ -406,10 +427,13 @@ def train_cbm_and_save(args):
 
     
     
-    # with open(os.path.join(save_name, "args.txt"), 'w') as f:
-    #     json.dump(args.__dict__, f, indent=2)
+    with open(os.path.join(save_name, "args.txt"), 'w') as f:
+        json.dump(args.__dict__, f, indent=2)
     # val_data_t = data_utils.get_data(d_val,args=args)
     # s_model,t_model = cbm.load_cbm_two_stream(save_name, device,args)
+    # cbm_utils.analysis_backbone_dim(s_model,val_data_t,args,5,300)
+    # cbm_utils.analysis_backbone_dim(t_model,val_data_t,args,5,300)
+
 
     # accuracy = cbm_utils.get_accuracy_cbm(s_model, val_data_t, device,32,8)
     # print("?****? Spatio Accuracy: {:.2f}%".format(accuracy*100))
