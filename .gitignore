@@ -13,4 +13,5 @@ debug/
 *.sh
 result/
 temp_result/
+gif/
 new_results/

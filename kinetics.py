@@ -133,7 +133,7 @@ class VideoClsDataset(Dataset):
                     buffer = self.loadvideo_decord(sample)
             buffer = self.data_transform(buffer)
             if self.center_frame:
-                buffer = buffer[:,self.clip_len//2,:,:]
+                # buffer = buffer[:,self.clip_len//2,:,:]
                 return buffer,self.label_array[index],sample
             return buffer, self.label_array[index]#sample.split("/")[-1].split(".")[0]
 

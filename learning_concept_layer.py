@@ -43,6 +43,7 @@ def spatio_temporal_joint(args,
     # save_spatio_temporal = os.path.join(save_name,'spatio_temporal')
     os.mkdir(save_spatial)
     os.mkdir(save_temporal)
+    os.mkdir(save_spatio_temporal)
     s_W_c,s_concepts = train_cocept_layer(args,
                                s_concepts,
                                target_features,
@@ -460,7 +461,7 @@ def train_classification_layer(args,W_c,pre_concepts,concepts, target_features,v
     linear.bias.data.zero_()
     
     STEP_SIZE = 0.05
-    ALPHA = 0.99
+    ALPHA = 0.8
     metadata = {}
     metadata['max_reg'] = {}
     metadata['max_reg']['nongrouped'] = args.lam
