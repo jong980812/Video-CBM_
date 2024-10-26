@@ -92,6 +92,151 @@ def spatio_temporal_joint(args,
     
     return
 
+def spatio_temporal_three_joint(args,
+                            s_concepts,
+                            target_features,
+                            val_target_features,
+                            s_clip_features,
+                            s_val_clip_features,
+                            t_concepts,
+                            t_clip_features,
+                            t_val_clip_features,
+                            p_concepts,
+                            p_clip_features,
+                            p_val_clip_features,
+                            save_name):
+    save_spatial = os.path.join(save_name,'spatial')
+    save_temporal = os.path.join(save_name,'temporal')
+    save_place = os.path.join(save_name,'place')
+    save_spatio_temporal_place = os.path.join(save_name,'spatio_temporal_place')
+    # save_spatio_temporal = os.path.join(save_name,'spatio_temporal')
+    os.mkdir(save_spatial)
+    os.mkdir(save_temporal)
+    os.mkdir(save_place)
+    os.mkdir(save_spatio_temporal_place)
+    train_cs,val_cs = [],[]
+    s_W_c,s_concepts = train_cocept_layer(args,
+                               s_concepts,
+                               target_features,
+                               val_target_features,
+                               s_clip_features, 
+                               s_val_clip_features,
+                               save_spatial)
+    proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(s_concepts), bias=False)
+    proj_layer.load_state_dict({"weight":s_W_c})
+    with torch.no_grad():
+        train_c = proj_layer(target_features.detach())
+        val_c = proj_layer(val_target_features.detach())
+        
+        train_mean = torch.mean(train_c, dim=0, keepdim=True)
+        train_std = torch.std(train_c, dim=0, keepdim=True)
+        
+        train_c -= train_mean
+        train_c /= train_std
+
+        val_c -= train_mean
+        val_c /= train_std
+        train_cs.append(train_c)
+        val_cs.append(val_c)
+    torch.save(train_mean, os.path.join(save_spatial, "proj_mean.pt"))
+    torch.save(train_std, os.path.join(save_spatial, "proj_std.pt"))
+        
+    t_W_c,t_concepts = train_cocept_layer(args,
+                               t_concepts,
+                               target_features,
+                               val_target_features,
+                               t_clip_features,
+                               t_val_clip_features,
+                               save_temporal)
+    proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(t_concepts), bias=False)
+    proj_layer.load_state_dict({"weight":t_W_c})
+    with torch.no_grad():
+
+        train_c = proj_layer(target_features.detach())
+        val_c = proj_layer(val_target_features.detach())
+        
+        train_mean = torch.mean(train_c, dim=0, keepdim=True)
+        train_std = torch.std(train_c, dim=0, keepdim=True)
+        
+        train_c -= train_mean
+        train_c /= train_std
+
+        val_c -= train_mean
+        val_c /= train_std
+        train_cs.append(train_c)
+        val_cs.append(val_c)
+    torch.save(train_mean, os.path.join(save_temporal, "proj_mean.pt"))
+    torch.save(train_std, os.path.join(save_temporal, "proj_std.pt"))
+    p_W_c,p_concepts = train_cocept_layer(args,
+                               p_concepts,
+                               target_features,
+                               val_target_features,
+                               p_clip_features,
+                               p_val_clip_features,
+                               save_place)
+    proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(p_concepts), bias=False)
+    proj_layer.load_state_dict({"weight":p_W_c})
+    with torch.no_grad():
+
+        train_c = proj_layer(target_features.detach())
+        val_c = proj_layer(val_target_features.detach())
+        
+        train_mean = torch.mean(train_c, dim=0, keepdim=True)
+        train_std = torch.std(train_c, dim=0, keepdim=True)
+        
+        train_c -= train_mean
+        train_c /= train_std
+
+        val_c -= train_mean
+        val_c /= train_std
+        train_cs.append(train_c)
+        val_cs.append(val_c)
+    torch.save(train_mean, os.path.join(save_place, "proj_mean.pt"))
+    torch.save(train_std, os.path.join(save_place, "proj_std.pt"))
+    train_c = torch.cat(train_cs,dim=1)
+    val_c = torch.cat(val_cs,dim=1)
+    del s_clip_features, s_val_clip_features,t_clip_features, t_val_clip_features,p_clip_features, p_val_clip_features
+    
+
+    stp_W_c = torch.cat([s_W_c,t_W_c,p_W_c],dim=0)
+    stp_concepts = s_concepts+t_concepts+p_concepts
+    train_classification_layer(args,
+                               W_c=stp_W_c,
+                               pre_concepts=None,
+                               concepts = stp_concepts,
+                               target_features=target_features,
+                               val_target_features=val_target_features,
+                                save_name=save_spatio_temporal_place,
+                                joint=(train_c,val_c)
+                               )
+
+    with open(os.path.join(save_name, "args.txt"), 'w') as f:
+        json.dump(args.__dict__, f, indent=2)
+        
+    d_val = args.data_set + "_test"
+    val_data_t = data_utils.get_data(d_val,args=args)
+    val_data_t.end_point = 2
+    device = torch.device(args.device)
+    
+    model,_ = cbm.load_cbm_triple(save_name, device,args)
+    print("?***? Start test")
+    accuracy = cbm_utils.get_accuracy_cbm(model, val_data_t, device,64,10)
+    print("?****? Accuracy: {:.2f}%".format(accuracy*100))
+    # d_val = args.data_set + "_test"
+    # val_data_t = data_utils.get_data(d_val,args=args)
+    # device = torch.device(args.device)
+    
+    # s_model,t_model = cbm.load_cbm_two_stream(save_name, device,args)
+
+    # print("!****! Start test Spatio")
+    # accuracy = cbm_utils.get_accuracy_cbm(s_model, val_data_t, device,32,10)
+    # print("!****! Spatio Accuracy: {:.2f}%".format(accuracy*100))
+    
+    # print("?***? Start test Temporal")
+    # accuracy = cbm_utils.get_accuracy_cbm(t_model, val_data_t, device,32,10)
+    # print("?****? Temporal Accuracy: {:.2f}%".format(accuracy*100))
+    
+    return
 
 def spatio_temporal_parallel(args,
                             s_concepts,
@@ -148,19 +293,20 @@ def spatio_temporal_parallel(args,
                                 )
     with open(os.path.join(save_name, "args.txt"), 'w') as f:
         json.dump(args.__dict__, f, indent=2)
-    # d_val = args.data_set + "_test"
-    # val_data_t = data_utils.get_data(d_val,args=args)
-    # device = torch.device(args.device)
+    d_val = args.data_set + "_test"
+    val_data_t = data_utils.get_data(d_val,args=args)
+    val_data_t.end_point = 2
+    device = torch.device(args.device)
     
-    # s_model,t_model = cbm.load_cbm_two_stream(save_name, device,args)
+    s_model,t_model = cbm.load_cbm_two_stream(save_name, device,args)
 
-    # print("!****! Start test Spatio")
-    # accuracy = cbm_utils.get_accuracy_cbm(s_model, val_data_t, device,32,10)
-    # print("!****! Spatio Accuracy: {:.2f}%".format(accuracy*100))
+    print("!****! Start test Spatio")
+    accuracy = cbm_utils.get_accuracy_cbm(s_model, val_data_t, device,32,10)
+    print("!****! Spatio Accuracy: {:.2f}%".format(accuracy*100))
     
-    # print("?***? Start test Temporal")
-    # accuracy = cbm_utils.get_accuracy_cbm(t_model, val_data_t, device,32,10)
-    # print("?****? Temporal Accuracy: {:.2f}%".format(accuracy*100))
+    print("?***? Start test Temporal")
+    accuracy = cbm_utils.get_accuracy_cbm(t_model, val_data_t, device,32,10)
+    print("?****? Temporal Accuracy: {:.2f}%".format(accuracy*100))
     
     return
 
@@ -330,8 +476,6 @@ def train_cocept_layer(args,concepts, target_features,val_target_features,clip_f
         for concept in concepts[1:]:
             f.write('\n'+concept)
     return W_c,concepts
-
-
 def train_attention_layer(args,s_concepts,t_concepts, s_W_c, t_W_c,target_features,val_target_features,save_name ):
     
     
@@ -418,10 +562,7 @@ def train_attention_layer(args,s_concepts,t_concepts, s_W_c, t_W_c,target_featur
                 total += len(y)
         print(f'acc:{correct/total}')
 
-
-
-
-def train_classification_layer(args,W_c,pre_concepts,concepts, target_features,val_target_features,save_name):
+def train_new_classification_layer(args,W_c,pre_concepts,concepts, target_features,val_target_features,save_name):
     proj_layer = torch.nn.Linear(in_features=len(pre_concepts) if args.train_mode=='serial' else target_features.shape[1], out_features=len(concepts), bias=False)
     proj_layer.load_state_dict({"weight":W_c})
     d_train = args.data_set + "_train"
@@ -429,29 +570,190 @@ def train_classification_layer(args,W_c,pre_concepts,concepts, target_features,v
     train_targets = data_utils.get_targets_only(d_train,args)
     val_targets = data_utils.get_targets_only(d_val,args)
     cls_file = data_utils.LABEL_FILES[args.data_set]
+    target_features = target_features.view(target_features.shape[0]//5,5,-1)
+    val_target_features = val_target_features.view(val_target_features.shape[0]//5,5,-1)
     with open(cls_file, "r") as f:
         classes = f.read().split("\n")
     with torch.no_grad():
-        train_c = proj_layer(target_features.detach())
-        val_c = proj_layer(val_target_features.detach())
-        
-        train_mean = torch.mean(train_c, dim=0, keepdim=True)
-        train_std = torch.std(train_c, dim=0, keepdim=True)
-        
-        train_c -= train_mean
-        train_c /= train_std
-        
-        train_y = torch.LongTensor(train_targets)
-        indexed_train_ds = IndexedTensorDataset(train_c, train_y)
+        train_cs, val_cs = [],[]
+        for i in range(5):
+            train_c = proj_layer(target_features[:,i,:].detach())
+            val_c = proj_layer(val_target_features[:,i,:].detach())
+            
+            train_mean = torch.mean(train_c, dim=0, keepdim=True)
+            train_std = torch.std(train_c, dim=0, keepdim=True)
+            
+            train_c -= train_mean
+            train_c /= train_std
+            val_c -= train_mean
+            val_c /= train_std
+            train_cs.append(train_c.unsqueeze(1))
+            val_cs.append(val_c.unsqueeze(1))
+        train_cs=torch.cat(train_cs,dim=1)
+        val_cs=torch.cat(val_cs,dim=1)
 
+            
+        train_y = torch.LongTensor(train_targets)
+        val_y = torch.LongTensor(val_targets)
+        indexed_train_ds = IndexedTensorDataset(train_cs, train_y)
+        val_ds = TensorDataset(val_cs,val_y)
+    indexed_train_loader = DataLoader(indexed_train_ds, batch_size=args.saga_batch_size, shuffle=True)
+    val_loader = DataLoader(val_ds, batch_size=args.saga_batch_size, shuffle=False)
+    
+    sparse_linear_attention = Sparse_attention(len(concepts),1,None, len(concepts),len(classes))
+    sparse_linear_attention.to(args.device)
+    optimizer = optim.Adam(
+    list(sparse_linear_attention.parameters()),  # 두 모듈의 파라미터를 함께 학습
+    lr=0.0001)  # Learning rate
+    print((sparse_linear_attention.parameters()))
+    loss_fn=nn.CrossEntropyLoss()
+    num_epochs = 50
+    for epoch in range(num_epochs):
+        sparse_linear_attention.train()
+        for batch in (indexed_train_loader):
+        # 학습 코드 (forward, backward, optimizer.step 등)
+            x1,y,_ = batch
+            x1=x1.to(args.device)
+            y=y.to(args.device)
+            optimizer.zero_grad()
+            # 예시 데이터와 로스 계산 과정
+            out,_ = sparse_linear_attention(x1)
+            loss = loss_fn(out,y)
+            loss.backward()
+            optimizer.step()
+            # 매 epoch마다 스케줄러 업데이트
+            # scheduler.step()
+            
+            # 현재 학습률 출력
+        print(f"Epoch {epoch+1}, Loss: {loss}")#, Current learning rate: {scheduler.get_last_lr()}")
+        correct = 0
+        total = 0
+        sparse_linear_attention.eval()
+        for batch in val_loader:
+            with torch.no_grad():
+                #outs = target_model(images.to(device))
+                x1,y = batch
+                x1=x1.to(args.device)
+                # x2=x2.to(args.device)
+                # y=y.to(args.device)
+                outs ,_= sparse_linear_attention(x1)
+                pred = torch.argmax(outs, dim=1)
+                correct += torch.sum(pred.cpu()==y)
+                total += len(y)
+        print(f'acc:{correct/total}')
+    torch.save(train_mean, os.path.join(save_name, "proj_mean.pt"))
+    torch.save(train_std, os.path.join(save_name, "proj_std.pt"))
+    torch.save(sparse_linear_attention.state_dict(), os.path.join(save_name, "W.pt"))
+def train_classification_multiview(args,W_c,pre_concepts,concepts, target_features,val_target_features,save_name):
+    proj_layer = torch.nn.Linear(in_features=len(pre_concepts) if args.train_mode=='serial' else target_features.shape[1], out_features=len(concepts), bias=False)
+    proj_layer.load_state_dict({"weight":W_c})
+    d_train = args.data_set + "_train"
+    d_val = args.data_set + "_val"
+    train_targets = data_utils.get_targets_only(d_train,args)
+    val_targets = data_utils.get_targets_only(d_val,args)
+    cls_file = data_utils.LABEL_FILES[args.data_set]
+    target_features = target_features.view(target_features.shape[0]//5,5,-1)
+    # val_target_features = val_target_features.view(val_target_features.shape[0]//5,5,-1)
+    with open(cls_file, "r") as f:
+        classes = f.read().split("\n")
+    with torch.no_grad():
+        train_cs=[]
+        val_c = proj_layer(val_target_features.detach())
+
+        for i in range(5):
+            train_c = proj_layer(target_features[:,i,:].detach())
+            # val_c = proj_layer(val_target_features[:,i,:].detach())
+            
+            train_mean = torch.mean(train_c, dim=0, keepdim=True)
+            train_std = torch.std(train_c, dim=0, keepdim=True)
+            
+            train_c -= train_mean
+            train_c /= train_std
+            train_cs.append(train_c.unsqueeze(1))
+
+        train_cs=torch.cat(train_cs,dim=1)
+        # val_cs=torch.cat(val_cs,dim=1)
+        ind2_train_c = proj_layer(target_features[:,2,:].detach())
+        
+        train_mean = torch.mean(ind2_train_c, dim=0, keepdim=True)
+        train_std = torch.std(ind2_train_c, dim=0, keepdim=True)
         val_c -= train_mean
         val_c /= train_std
-        
+            
+        train_y = torch.LongTensor(train_targets)
         val_y = torch.LongTensor(val_targets)
-
+        indexed_train_ds = IndexedTensorDataset(train_cs, train_y)
         val_ds = TensorDataset(val_c,val_y)
+    indexed_train_loader = DataLoader(indexed_train_ds, batch_size=args.saga_batch_size, shuffle=True)
+    val_loader = DataLoader(val_ds, batch_size=args.saga_batch_size, shuffle=False)
+    # Make linear model and zero initialize
+    linear = torch.nn.Linear(train_c.shape[1],len(classes)).to(args.device)
+    linear.weight.data.zero_()
+    linear.bias.data.zero_()
+    
+    STEP_SIZE = 0.01
+    ALPHA = 0.99
+    metadata = {}
+    metadata['max_reg'] = {}
+    metadata['max_reg']['nongrouped'] = args.lam
+
+    # Solve the GLM path
+    #concept layer to classification
+    output_proj = glm_saga(linear, indexed_train_loader, STEP_SIZE, args.n_iters, ALPHA, epsilon=1, k=1,
+                    val_loader=val_loader, do_zero=False, metadata=metadata, n_ex=len(target_features), n_classes = len(classes),verbose=10,multiview=True)
+    W_g = output_proj['path'][0]['weight']
+    b_g = output_proj['path'][0]['bias']
+    
+
+    torch.save(train_mean, os.path.join(save_name, "proj_mean.pt"))
+    torch.save(train_std, os.path.join(save_name, "proj_std.pt"))
+    torch.save(W_g, os.path.join(save_name, "W_g.pt"))
+    torch.save(b_g, os.path.join(save_name, "b_g.pt"))
+    with open(os.path.join(save_name, "metrics.txt"), 'w') as f:
+        out_dict = {}
+        for key in ('lam', 'lr', 'alpha', 'time'):
+            out_dict[key] = float(output_proj['path'][0][key])
+        out_dict['metrics'] = output_proj['path'][0]['metrics']
+        nnz = (W_g.abs() > 1e-5).sum().item()
+        total = W_g.numel()
+        out_dict['sparsity'] = {"Non-zero weights":nnz, "Total weights":total, "Percentage non-zero":nnz/total}
+        json.dump(out_dict, f, indent=2)
+def train_classification_layer(args=None,W_c=None,pre_concepts=None,concepts=None, target_features=None,val_target_features=None,save_name=None,joint=None):
+    cls_file = data_utils.LABEL_FILES[args.data_set]
+    d_train = args.data_set + "_train"
+    d_val = args.data_set + "_val"
+    train_targets = data_utils.get_targets_only(d_train,args)
+    val_targets = data_utils.get_targets_only(d_val,args)
+    train_y = torch.LongTensor(train_targets)
+    val_y = torch.LongTensor(val_targets)
+    with open(cls_file, "r") as f:
+        classes = f.read().split("\n")
+    if args.multiview:
+        train_y=torch.repeat_interleave(train_y, 5)
+    if joint is None:
+        proj_layer = torch.nn.Linear(in_features=len(pre_concepts) if args.train_mode=='serial' else target_features.shape[1], out_features=len(concepts), bias=False)
+        proj_layer.load_state_dict({"weight":W_c})
+        with torch.no_grad():
+            train_c = proj_layer(target_features.detach())
+            val_c = proj_layer(val_target_features.detach())
+            
+            train_mean = torch.mean(train_c, dim=0, keepdim=True)
+            train_std = torch.std(train_c, dim=0, keepdim=True)
+            
+            train_c -= train_mean
+            train_c /= train_std
+
+            val_c -= train_mean
+            val_c /= train_std
+    else:
+        train_c, val_c = joint
+        
+        
 
 
+    indexed_train_ds = IndexedTensorDataset(train_c, train_y)
+    val_ds = TensorDataset(val_c,val_y)
+        
     indexed_train_loader = DataLoader(indexed_train_ds, batch_size=args.saga_batch_size, shuffle=True)
     val_loader = DataLoader(val_ds, batch_size=args.saga_batch_size, shuffle=False)
 
@@ -461,7 +763,7 @@ def train_classification_layer(args,W_c,pre_concepts,concepts, target_features,v
     linear.bias.data.zero_()
     
     STEP_SIZE = 0.05
-    ALPHA = 0.8
+    ALPHA = 0.99
     metadata = {}
     metadata['max_reg'] = {}
     metadata['max_reg']['nongrouped'] = args.lam
@@ -469,13 +771,13 @@ def train_classification_layer(args,W_c,pre_concepts,concepts, target_features,v
     # Solve the GLM path
     #concept layer to classification
     output_proj = glm_saga(linear, indexed_train_loader, STEP_SIZE, args.n_iters, ALPHA, epsilon=1, k=1,
-                    val_loader=val_loader, do_zero=False, metadata=metadata, n_ex=len(target_features), n_classes = len(classes))
+                    val_loader=val_loader, do_zero=False, metadata=metadata, n_ex=len(target_features), n_classes = len(classes),verbose=10)
     W_g = output_proj['path'][0]['weight']
     b_g = output_proj['path'][0]['bias']
     
-
-    torch.save(train_mean, os.path.join(save_name, "proj_mean.pt"))
-    torch.save(train_std, os.path.join(save_name, "proj_std.pt"))
+    if joint is None:
+        torch.save(train_mean, os.path.join(save_name, "proj_mean.pt"))
+        torch.save(train_std, os.path.join(save_name, "proj_std.pt"))
     torch.save(W_g, os.path.join(save_name, "W_g.pt"))
     torch.save(b_g, os.path.join(save_name, "b_g.pt"))
     with open(os.path.join(save_name, "metrics.txt"), 'w') as f:
@@ -520,7 +822,7 @@ class ResidualAttentionBlock(nn.Module):
         return self.attn(x, x2, x2, need_weights=False, attn_mask=self.attn_mask)[0]
 
     def forward(self, x: torch.Tensor,x2:torch.Tensor):
-        x = x + self.attention(x,x2)
+        x = self.attention(x,x2)+x
         # x = x + self.mlp((x))
         return x
 
@@ -529,21 +831,50 @@ class Sparse_attention(nn.Module):
     def __init__(self, d_model: int=1, n_head: int=1, attn_mask: torch.Tensor = None, linear_in=1, linear_out=1):
         super().__init__()
         
-        self.cross_attention = ResidualAttentionBlock(d_model,n_head,attn_mask)
-        self.sparse_linear = SparseLinear(linear_in,linear_out)
+        self.attention = ResidualAttentionBlock(d_model,n_head,attn_mask)
+        self.spatial_token = nn.Parameter(torch.randn(1,linear_in))
+        self.sparse_linear = SparseLinear(linear_in,linear_out,bias=True,sparsity=0.9,alpha=0.1)
         
-    def forward(self,x1,x2):
-        x1 = x1.unsqueeze(-1)
-        x2 = x2.unsqueeze(-1)
+    def forward(self,x):
+        # x1 = x1.unsqueeze(-1)
+        # x2 = x2.unsqueeze(-1)
+        # spatial_token = self.spatial_token.expand(1,x1.shape[0],-1)
+        x = x.permute(1, 0, 2)  # NLD -> LND
+        # x2 = x2.permute(1, 0, 2)  # NLD -> LND
         
-        x1 = x1.permute(1, 0, 2)  # NLD -> LND
-        x2 = x2.permute(1, 0, 2)  # NLD -> LND
-
-        x= self.cross_attention(x1,x2)
-        x = x.permute(1, 0, 2)  #
-        x=x.squeeze(-1)
+        x= self.attention(x,x)
+        x = x.permute(1, 0, 2)  #NLD
+        # final_feat=x.mean(1)
         x = self.sparse_linear(x)
-        return x
+        x = x.mean(1)
+        return x,None#final_feat
+    def forward_feat(self,x):
     
+        spatial_token = self.spatial_token.expand(1,x.shape[0],-1)
+        x1 = x.permute(1, 0, 2)  # NLD -> LND
+        # x2 = x2.permute(1, 0, 2)  # NLD -> LND
 
+        sub_act= self.attention(spatial_token,x1).permute(1,0,2).squeeze(1)#N,1,D
+        mean_act = x[:,2,:]#.mean(1)  #NLD
+        # final_feat=x.squeeze(1)
+        x = self.sparse_linear(mean_act)
+        # sub_x = self.sparse_linear(sub_act)
+        final = x#+sub_x*0.1
+        return final,sub_act
+    def forward_feat_ensemble(self,x):
     
+        spatial_token = self.spatial_token.expand(1,x.shape[0],-1)
+        x1 = x.permute(1, 0, 2)  # NLD -> LND
+        # x2 = x2.permute(1, 0, 2)  # NLD -> LND
+
+        sub_act= self.attention(spatial_token,x1).permute(1,0,2).squeeze(1)#N,1,D
+        # mean_act = x.mean(1)  #NLD
+        # final_feat=x.squeeze(1)
+        x = self.sparse_linear(x)
+        sub_x = self.sparse_linear(sub_act)
+        final = x.mean(1)+(0.1*sub_x)
+        return final,sub_act
+    # def forward_feat_self(self,x1):
+    
+    #     x=x1[]
+    #     return x,final_feat
