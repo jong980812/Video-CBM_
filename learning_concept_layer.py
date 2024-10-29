@@ -9,7 +9,7 @@ from torch import nn
 import cbm
 import torch
 from tqdm import tqdm
-
+import debugging
 from timm.utils import accuracy
 import os
 import random
@@ -213,15 +213,18 @@ def spatio_temporal_three_joint(args,
     with open(os.path.join(save_name, "args.txt"), 'w') as f:
         json.dump(args.__dict__, f, indent=2)
         
-    d_val = args.data_set + "_test"
-    val_data_t = data_utils.get_data(d_val,args=args)
-    val_data_t.end_point = 2
-    device = torch.device(args.device)
+    # d_val = args.data_set + "_test"
+    # val_data_t = data_utils.get_data(d_val,args=args)
+    # val_data_t.end_point = 2
+    # device = torch.device(args.device)
     
-    model,_ = cbm.load_cbm_triple(save_name, device,args)
-    print("?***? Start test")
-    accuracy = cbm_utils.get_accuracy_cbm(model, val_data_t, device,64,10)
-    print("?****? Accuracy: {:.2f}%".format(accuracy*100))
+    
+    debugging.debug(args,save_name)
+    
+    # model,_ = cbm.load_cbm_triple(save_name, device,args)
+    # print("?***? Start test")
+    # accuracy = cbm_utils.get_accuracy_cbm(model, val_data_t, device,128,10)
+    # print("?****? Accuracy: {:.2f}%".format(accuracy*100))
     # d_val = args.data_set + "_test"
     # val_data_t = data_utils.get_data(d_val,args=args)
     # device = torch.device(args.device)
@@ -414,6 +417,70 @@ def spatio_temporal_attention(args,
 
 
 def train_cocept_layer(args,concepts, target_features,val_target_features,clip_feature,val_clip_features,save_name):
+    similarity_fn = similarity.cos_similarity_cubed_single
+    proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(concepts),
+                                bias=False).to(args.device)
+    opt = torch.optim.Adam(proj_layer.parameters(), lr=1e-3)
+
+    indices = [ind for ind in range(len(target_features))]
+
+    best_val_loss = float("inf")
+    best_step = 0
+    best_weights = None
+    proj_batch_size = min(args.proj_batch_size, len(target_features))
+    for i in range(args.proj_steps):
+        batch = torch.LongTensor(random.sample(indices, k=proj_batch_size))
+        outs = proj_layer(target_features[batch].to(args.device).detach())
+        loss = -similarity_fn(clip_feature[batch].to(args.device).detach(), outs)
+        
+        loss = torch.mean(loss)
+        loss.backward()
+        opt.step()
+        if i%50==0 or i==args.proj_steps-1:
+            with torch.no_grad():
+                val_output = proj_layer(val_target_features.to(args.device).detach())
+                val_loss = -similarity_fn(val_clip_features.to(args.device).detach(), val_output)
+                val_loss = torch.mean(val_loss)
+            if i==0:
+                best_val_loss = val_loss
+                best_step = i
+                best_weights = proj_layer.weight.clone()
+                print("Step:{}, Avg train similarity:{:.4f}, Avg val similarity:{:.4f}".format(best_step, -loss.cpu(),
+                                                                                            -best_val_loss.cpu()))
+                
+            elif val_loss < best_val_loss:
+                best_val_loss = val_loss
+                best_step = i
+                best_weights = proj_layer.weight.clone()
+            else: #stop if val loss starts increasing
+                break
+        opt.zero_grad()
+    proj_layer.load_state_dict({"weight":best_weights})
+    print("**Best step:{}, Avg val similarity:{:.4f}".format(best_step, -best_val_loss.cpu()))
+
+    #delete concepts that are not interpretable
+    with torch.no_grad():
+        outs = proj_layer(val_target_features.to(args.device).detach())
+        sim = similarity_fn(val_clip_features.to(args.device).detach(), outs)
+        interpretable = sim > args.interpretability_cutoff
+        
+    if args.print:
+        for i, concept in enumerate(concepts):
+            if sim[i]<=args.interpretability_cutoff:
+                print("Deleting {}, Iterpretability:{:.3f}".format(concept, sim[i]))
+    original_n_concept = len(concepts)
+
+    concepts = [concepts[i] for i in range(len(concepts)) if interpretable[i]]
+    print(f"Num concept {len(concepts)} from {original_n_concept}")
+    W_c = proj_layer.weight[interpretable]
+    torch.save(W_c, os.path.join(save_name ,"W_c.pt"))
+    with open(os.path.join(save_name, "concepts.txt"), 'w') as f:
+        f.write(concepts[0])
+        for concept in concepts[1:]:
+            f.write('\n'+concept)
+    return W_c,concepts
+
+def train_cocept_layer_scratch(args,concepts, target_features,val_target_features,clip_feature,val_clip_features,save_name):
     similarity_fn = similarity.cos_similarity_cubed_single
     proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(concepts),
                                 bias=False).to(args.device)

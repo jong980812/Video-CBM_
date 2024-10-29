@@ -26,6 +26,7 @@ LABEL_FILES = {"places365":"data/categories_places365_clean.txt",
                "SSV2":"data/ssv2_classes.txt",
                "mini-SSV2":"data/mini-ssv2_classes.txt",
                "kinetics400":"data/kinetics400_classes.txt",
+               "kinetics400_scratch":"data/kinetics400_classes.txt",
                "kinetics100":"data/kinetics100_classes.txt",
                }
 
@@ -57,6 +58,12 @@ def get_data(dataset_name, preprocess=None,args = None):
     elif dataset_name == "kinetics400_val":
         data, _= build_dataset(is_train=False, test_mode=False, args=args)
     elif dataset_name == "kinetics400_test":
+        data, _= build_dataset(is_train=False, test_mode=True, args=args)
+    elif dataset_name == "kinetics400_scratch_train":
+        data, _= build_dataset(is_train=True, test_mode=False, args=args)
+    elif dataset_name == "kinetics400_scratch_val":
+        data, _= build_dataset(is_train=False, test_mode=False, args=args)
+    elif dataset_name == "kinetics400_scratch_test":
         data, _= build_dataset(is_train=False, test_mode=True, args=args)
     elif dataset_name == "kinetics100_train":
         data, _= build_dataset(is_train=True, test_mode=False, args=args)

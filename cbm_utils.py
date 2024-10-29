@@ -140,6 +140,9 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
         target_model, target_preprocess = data_utils.get_target_model(target_name, device,args)
     target_model.to(device)
     target_model.eval()
+    dual_encoder_model.to(device)
+    dual_encoder_model.eval()
+    
     #setup data
     #! Video Dataset은 embedded preprocess 
     data_c = data_utils.get_data(d_probe, clip_preprocess,args)
@@ -285,11 +288,57 @@ def get_accuracy_cbm(model, dataset, device, batch_size=250, num_workers=10):
                                            pin_memory=True)):
         with torch.no_grad():
             #outs = target_model(images.to(device))
-            outs, _ = model(images.to(device))
+            outs, concept_activation = model(images.to(device))
             pred = torch.argmax(outs, dim=1)
             correct += torch.sum(pred.cpu()==labels)
             total += len(labels)
     return correct/total
+def get_accuracy_and_concept_distribution_cbm(model,k,dataset, device, batch_size=250, num_workers=10):
+    correct = 0
+    total = 0
+    num_object,num_action,num_scene=model.s_proj_layer.weight.shape[0],model.t_proj_layer.weight.shape[0],model.p_proj_layer.weight.shape[0]
+    num_concept = num_object + num_action + num_scene  
+    
+    # concept set의 인덱스 범위
+    object_range = (0, num_object)  
+    action_range = (num_object, num_object + num_action)
+    scene_range = (num_object + num_action, num_concept)
+    
+    # concept set별 개수 기록용 변수 초기화
+    total_object_count = 0
+    total_action_count = 0
+    total_scene_count = 0
+    model.eval()
+    for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=10,
+                                           pin_memory=True)):
+        with torch.no_grad():
+            #outs = target_model(images.to(device))
+            outs, concept_activation = model(images.to(device))
+            pred = torch.argmax(outs, dim=1)
+            correct += torch.sum(pred.cpu()==labels)
+            total += len(labels)
+            pred_weights = model.final.weight[pred]  # shape: (batch, num_concept)
+            concept_contribution = concept_activation * pred_weights  
+            topk_indices = torch.topk(concept_contribution, k, dim=1).indices  # shape: (batch, topk)
+
+            # 각 샘플에 대해 concept set의 개수 세기
+            for i in range(topk_indices.size(0)):
+                object_count = action_count = scene_count = 0
+                for idx in topk_indices[i]:
+                    if object_range[0] <= idx < object_range[1]:
+                        object_count += 1
+                    elif action_range[0] <= idx < action_range[1]:
+                        action_count += 1
+                    elif scene_range[0] <= idx < scene_range[1]:
+                        scene_count += 1
+                
+                # 전체 개수 합산
+                total_object_count += object_count
+                total_action_count += action_count
+                total_scene_count += scene_count
+    
+    return correct/total,[total_object_count,total_action_count,total_scene_count]
+
 
 def get_preds_cbm(model, dataset, device, batch_size=250, num_workers=2):
     preds = []
@@ -329,21 +378,21 @@ def save_vmae_video_features(model, dataset, save_name, batch_size=1000 , device
     save_dir = save_name[:save_name.rfind("/")]
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-    for end_point in range(5):
-        all_features = []
-        dataset.end_point = end_point
-        with torch.no_grad():
-            for videos, labels in tqdm(DataLoader(dataset, batch_size, num_workers=10, pin_memory=True,shuffle=False)):
-                # t = (images.shape)[2]
-                # if args.center_frame:
-                #     images = images.squeeze(2)
-                features = model.forward_features(videos.to(device))
-                all_features.append(features.cpu())
-        torch.save(torch.cat(all_features), save_name+f'_{end_point}')
+    # for end_point in range(5):
+    all_features = []
+    #     dataset.end_point = end_point
+    with torch.no_grad():
+        for videos, labels in tqdm(DataLoader(dataset, batch_size, num_workers=10, pin_memory=True,shuffle=False)):
+            # t = (images.shape)[2]
+            # if args.center_frame:
+            #     images = images.squeeze(2)
+            features = model.forward_features(videos.to(device))
+            all_features.append(features.cpu())
+    torch.save(torch.cat(all_features), save_name)
 
-        #free memory
-        del all_features
-        torch.cuda.empty_cache()
+    #free memory
+    del all_features
+    torch.cuda.empty_cache()
     return
 
 
@@ -439,26 +488,26 @@ def save_internvid_video_features(model, dataset, save_name, batch_size=1000 , d
     save_dir = save_name[:save_name.rfind("/")]
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-    for end_point in range(5):
-        all_features = []
-        dataset.end_point = end_point
+    # for end_point in range(5):
+    all_features = []
+        # dataset.end_point = end_point
         # dl=DataLoader(dataset, batch_size, num_workers=10, pin_memory=True,shuffle=False)
-        with torch.no_grad():
-            for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=1, pin_memory=True,shuffle=False)):
-                # t = (images.shape)[2]
-                # if args.center_frame:
-                #     images = images.squeeze(2)
-                features = model.encode_vision(images.to(device))
-                all_features.append(features.cpu())
-                # all_labels+=(labels.tolist())
-        torch.save(torch.cat(all_features), save_name+f'_{end_point}')
+    with torch.no_grad():
+        for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=10, pin_memory=True,shuffle=False)):
+            # t = (images.shape)[2]
+            # if args.center_frame:
+            #     images = images.squeeze(2)
+            features = model.encode_vision(images.to(device))
+            all_features.append(features.cpu())
+            # all_labels+=(labels.tolist())
+    torch.save(torch.cat(all_features), save_name)
         # torch.save(torch.cat(all_labels), os.path.join(save_dir,'label.pt'))
         # with open(os.path.join(save_dir,"label.txt"), "w") as file:
         #     for item in all_labels:
         #         file.write(f"{item}\n") 
         #free memory
-        del all_features
-        torch.cuda.empty_cache()
+    del all_features
+    torch.cuda.empty_cache()
     return
 def save_internvid_text_features(model, text, save_name, batch_size=1000):
     

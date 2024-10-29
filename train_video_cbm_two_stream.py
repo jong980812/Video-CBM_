@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import video_utils
 import torch.distributed as dist
 from learning_concept_layer import spatio_temporal_parallel,spatio_temporal_serial, spatio_temporal_attention,spatio_temporal_joint,spatio_temporal_three_joint
-
+import debugging
 parser = argparse.ArgumentParser(description='Settings for creating CBM')
 # parser.add_argument('--batch_size', default=64, type=int)
 # parser.add_argument('--epochs', default=30, type=int)
@@ -136,7 +136,7 @@ parser.add_argument('--imagenet_default_mean_and_std', default=True, action='sto
 parser.add_argument('--num_segments', type=int, default= 1)
 parser.add_argument('--num_frames', type=int, default= 16)
 parser.add_argument('--sampling_rate', type=int, default= 4)
-parser.add_argument('--data_set', default='Kinetics-400', choices=['kinetics100','kinetics400', 'mini-SSV2','SSV2', 'UCF101', 'HMDB51','image_folder'],
+parser.add_argument('--data_set', default='Kinetics-400', choices=['kinetics100','kinetics400','kinetics400_scratch', 'mini-SSV2','SSV2', 'UCF101', 'HMDB51','image_folder'],
                     type=str, help='dataset')
 parser.add_argument('--output_dir', default='',
                     help='path where to save, empty for no saving')
@@ -216,6 +216,7 @@ parser.add_argument('--train_mode',type=str,default='para')
 parser.add_argument('--internvid_version',type=str,default='200m')
 parser.add_argument('--only_s',action='store_true')
 parser.add_argument('--multiview',action='store_true')
+parser.add_argument('--debug',default=None)
 
 def train_cbm_and_save(args):
     video_utils.init_distributed_mode(args)
@@ -252,8 +253,12 @@ def train_cbm_and_save(args):
         t_concepts = f.read().split("\n")
     with open(args.p_concept_set) as f:
         p_concepts = f.read().split("\n")
+    if args.debug is not None:
+        debugging.debug(args,args.debug)
+        return
+        
     #save activations and get save_paths
-    for d_probe in [d_val]:
+    for d_probe in [d_train, d_val]:
         cbm_utils.save_activations(clip_name = args.dual_encoder, target_name = args.backbone, 
                                target_layers = [args.feature_layer], d_probe = d_probe,
                                concept_set = (args.s_concept_set, args.t_concept_set,args.p_concept_set), batch_size = args.batch_size, 

@@ -819,7 +819,6 @@ van
 vase
 vegetables
 vest
-video
 wall
 wallpaper
 washer
