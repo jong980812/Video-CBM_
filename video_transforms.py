@@ -542,7 +542,7 @@ def random_resized_crop(
     images,
     target_height,
     target_width,
-    scale=(0.8, 1.0),
+    scale=(0.1, 1.0),
     ratio=(3.0 / 4.0, 4.0 / 3.0),
 ):
     """

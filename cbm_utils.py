@@ -62,7 +62,7 @@ def save_clip_image_features(model, dataset, save_name, batch_size=1000 , device
             # t = (images.shape)[2]
             # if args.center_frame:
             #     images = images.squeeze(2)
-            features = model.encode_video(images.to(device))# B, D
+            features = model.encode_video(images.to(device))# B,T, D
             all_features.append(features.cpu())
 
     torch.save(torch.cat(all_features), save_name)
@@ -111,9 +111,9 @@ def save_clip_text_features(model, text, save_name, batch_size=1000):
 def save_activations(clip_name, target_name, target_layers, d_probe, 
                      concept_set, batch_size, device, pool_mode, save_dir,args=None):
     
-    s_concept_set, t_concept_set = concept_set
+    s_concept_set, t_concept_set,p_concept_set = concept_set
 
-    target_save_name, clip_save_name, s_text_save_name, t_text_save_name = get_save_names(clip_name, target_name, 
+    target_save_name, clip_save_name, s_text_save_name, t_text_save_name,p_text_save_name = get_save_names(clip_name, target_name, 
                                                                     "{}", d_probe, concept_set, 
                                                                       pool_mode, save_dir)
     # save_names = {"clip": clip_save_name, "text": text_save_name}
@@ -131,7 +131,8 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
     elif "internvid" in args.dual_encoder:
         dual_encoder_model, _ = get_intervid(args,device)
         clip_preprocess = None
-        
+        name = 'ViT-B/16'
+        clip_model, clip_preprocess = clip.load(name, device=device)
 
     #! Load backbone 
     if target_name.startswith("clip_"):
@@ -140,47 +141,62 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
         target_model, target_preprocess = data_utils.get_target_model(target_name, device,args)
     target_model.to(device)
     target_model.eval()
+    dual_encoder_model.to(device)
+    dual_encoder_model.eval()
+    
     #setup data
     #! Video Dataset은 embedded preprocess 
     data_c = data_utils.get_data(d_probe, clip_preprocess,args)
-    data_t = data_utils.get_data(d_probe, target_preprocess,args)
+    data_c.end_point=2
+    # data_c = data_utils.get_data(d_probe, target_preprocess,args)
 
     with open(s_concept_set, 'r') as f: 
         s_words = (f.read()).split('\n')
     with open(t_concept_set, 'r') as f: 
         t_words = (f.read()).split('\n')
+    with open(p_concept_set, 'r') as f: 
+        p_words = (f.read()).split('\n')
     
     if args.dual_encoder =='clip':
         s_text = clip.tokenize(["{}".format(word) for word in s_words]).to(device)
         t_text = clip.tokenize(["{}".format(word) for word in t_words]).to(device)
+        p_text = clip.tokenize(["{}".format(word) for word in p_words]).to(device)
         save_clip_text_features(dual_encoder_model , s_text, s_text_save_name, batch_size)
         save_clip_text_features(dual_encoder_model , t_text, t_text_save_name, batch_size)
+        save_clip_text_features(dual_encoder_model , p_text, p_text_save_name, batch_size)
         if not args.saved_features:
             save_clip_image_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
     elif args.dual_encoder =='lavila':
         s_text = clip.tokenize(["{}".format(word) for word in s_words]).to(device)
         t_text = clip.tokenize(["{}".format(word) for word in t_words]).to(device)
+        p_text = clip.tokenize(["{}".format(word) for word in p_words]).to(device)
         save_clip_text_features(dual_encoder_model , s_text, s_text_save_name, batch_size)
         save_clip_text_features(dual_encoder_model , t_text, t_text_save_name, batch_size)
+        save_clip_text_features(dual_encoder_model , p_text, p_text_save_name, batch_size)
         if not args.saved_features:
             save_lavila_video_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
     elif 'internvid' in args.dual_encoder:
-        s_text = dual_encoder_model.text_encoder.tokenize(s_words, context_length=32).to(device)
-        t_text = dual_encoder_model.text_encoder.tokenize(t_words, context_length=32).to(device)
-        save_internvid_text_features(dual_encoder_model , s_text, s_text_save_name, batch_size)
+        s_text = clip.tokenize(["A photo of {}.".format(word) for word in s_words]).to(device)
+        t_text = dual_encoder_model.text_encoder.tokenize(["{}".format(word.replace('something','')) for word in t_words], context_length=32).to(device)
+        p_text = clip.tokenize(["A Person at the {}.".format(word) for word in p_words]).to(device)
+        # save_internvid_text_features(dual_encoder_model , s_text, s_text_save_name, batch_size)
+        save_clip_text_features(clip_model , s_text, s_text_save_name, batch_size)
+        
         save_internvid_text_features(dual_encoder_model , t_text, t_text_save_name, batch_size)
+        # save_internvid_text_features(dual_encoder_model , p_text, p_text_save_name, batch_size)
+        save_clip_text_features(clip_model , p_text, p_text_save_name, batch_size)
+        
         if not args.saved_features:
             save_internvid_video_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
-            
     if args.saved_features:# 이 아래는 saved_feature이면 안해도됌.
         return
     
     if target_name.startswith("clip_"):
-        save_clip_image_features(target_model, data_t, target_save_name, batch_size, device,args)
+        save_clip_image_features(target_model, data_c, target_save_name, batch_size, device,args)
     elif target_name.startswith("vmae_") or target_name=='AIM':
-        save_vmae_video_features(target_model,data_t,target_save_name,batch_size,device,args)
+        save_vmae_video_features(target_model,data_c,target_save_name,batch_size,device,args)
     else:
-        save_target_activations(target_model, data_t, target_save_name, target_layers,
+        save_target_activations(target_model, data_c, target_save_name, target_layers,
                                 batch_size, device, pool_mode)
     return
     
@@ -230,19 +246,21 @@ def get_activation(outputs, mode):
 
     
 def get_save_names(clip_name, target_name, target_layer, d_probe, concept_set, pool_mode, save_dir):
-    s_concept, t_concept = concept_set    
+    s_concept, t_concept,p_concept = concept_set    
     # if target_name.startswith("clip_"):
     target_save_name = "{}/{}_{}.pt".format(save_dir, d_probe, target_name.replace('/', ''))
     # else:
     #     target_save_name = "{}/{}_{}_{}{}.pt".format(save_dir, d_probe, target_name, target_layer,
     #                                              PM_SUFFIX[pool_mode])
     clip_save_name = "{}/{}_{}.pt".format(save_dir, d_probe, clip_name.replace('/', ''))
-    s_concept_set_name = (s_concept.split("/")[-1]).split(".")[0]
-    t_concept_set_name = (t_concept.split("/")[-1]).split(".")[0]
+    s_concept_set_name = (s_concept.split("/")[-1]).split(".")[0] if s_concept is not None else None
+    t_concept_set_name = (t_concept.split("/")[-1]).split(".")[0] if t_concept is not None else None
+    p_concept_set_name = (p_concept.split("/")[-1]).split(".")[0] if p_concept is not None else None
     s_text_save_name = "{}/{}_{}.pt".format(save_dir, s_concept_set_name, clip_name.replace('/', ''))
     t_text_save_name = "{}/{}_{}.pt".format(save_dir, t_concept_set_name, clip_name.replace('/', ''))
+    p_text_save_name = "{}/{}_{}.pt".format(save_dir, p_concept_set_name, clip_name.replace('/', ''))
     
-    return target_save_name, clip_save_name, s_text_save_name, t_text_save_name
+    return target_save_name, clip_save_name, s_text_save_name, t_text_save_name,p_text_save_name
 
     
 def _all_saved(save_names):
@@ -274,11 +292,57 @@ def get_accuracy_cbm(model, dataset, device, batch_size=250, num_workers=10):
                                            pin_memory=True)):
         with torch.no_grad():
             #outs = target_model(images.to(device))
-            outs, _ = model(images.to(device))
+            outs, concept_activation = model(images.to(device))
             pred = torch.argmax(outs, dim=1)
             correct += torch.sum(pred.cpu()==labels)
             total += len(labels)
     return correct/total
+def get_accuracy_and_concept_distribution_cbm(model,k,dataset, device, batch_size=250, num_workers=10):
+    correct = 0
+    total = 0
+    num_object,num_action,num_scene=model.s_proj_layer.weight.shape[0],model.t_proj_layer.weight.shape[0],model.p_proj_layer.weight.shape[0]
+    num_concept = num_object + num_action + num_scene  
+    
+    # concept set의 인덱스 범위
+    object_range = (0, num_object)  
+    action_range = (num_object, num_object + num_action)
+    scene_range = (num_object + num_action, num_concept)
+    
+    # concept set별 개수 기록용 변수 초기화
+    total_object_count = 0
+    total_action_count = 0
+    total_scene_count = 0
+    model.eval()
+    for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=10,
+                                           pin_memory=True)):
+        with torch.no_grad():
+            #outs = target_model(images.to(device))
+            outs, concept_activation = model(images.to(device))
+            pred = torch.argmax(outs, dim=1)
+            correct += torch.sum(pred.cpu()==labels)
+            total += len(labels)
+            pred_weights = model.final.weight[pred]  # shape: (batch, num_concept)
+            concept_contribution = concept_activation * pred_weights  
+            topk_indices = torch.topk(concept_contribution, k, dim=1).indices  # shape: (batch, topk)
+
+            # 각 샘플에 대해 concept set의 개수 세기
+            for i in range(topk_indices.size(0)):
+                object_count = action_count = scene_count = 0
+                for idx in topk_indices[i]:
+                    if object_range[0] <= idx < object_range[1]:
+                        object_count += 1
+                    elif action_range[0] <= idx < action_range[1]:
+                        action_count += 1
+                    elif scene_range[0] <= idx < scene_range[1]:
+                        scene_count += 1
+                
+                # 전체 개수 합산
+                total_object_count += object_count
+                total_action_count += action_count
+                total_scene_count += scene_count
+    
+    return correct/total,[total_object_count,total_action_count,total_scene_count]
+
 
 def get_preds_cbm(model, dataset, device, batch_size=250, num_workers=2):
     preds = []
@@ -311,7 +375,6 @@ def get_concept_act_by_pred(model, dataset, device):
 
 def save_vmae_video_features(model, dataset, save_name, batch_size=1000 , device = "cuda",args = None):
     _make_save_dir(save_name)
-    all_features = []
     
     if os.path.exists(save_name):
         return
@@ -319,6 +382,9 @@ def save_vmae_video_features(model, dataset, save_name, batch_size=1000 , device
     save_dir = save_name[:save_name.rfind("/")]
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
+    # for end_point in range(5):
+    all_features = []
+    #     dataset.end_point = end_point
     with torch.no_grad():
         for videos, labels in tqdm(DataLoader(dataset, batch_size, num_workers=10, pin_memory=True,shuffle=False)):
             # t = (images.shape)[2]
@@ -327,46 +393,12 @@ def save_vmae_video_features(model, dataset, save_name, batch_size=1000 , device
             features = model.forward_features(videos.to(device))
             all_features.append(features.cpu())
     torch.save(torch.cat(all_features), save_name)
+
     #free memory
     del all_features
     torch.cuda.empty_cache()
     return
 
-def save_vmae_video_features_multinode(model=None,model_without_ddp=None, data_loader=None,dataset=None, save_name=None, batch_size=1000 , device = "cuda",args = None):
-    _make_save_dir(save_name)
-    all_features = []
-    
-    if os.path.exists(save_name):
-        return
-    
-    save_dir = save_name[:save_name.rfind("/")]
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-    world_size = dist.get_world_size()
-    rank = dist.get_rank() 
-    if rank == 0:
-        data_loader = tqdm(data_loader)
-    with torch.no_grad():
-        for videos, labels in data_loader:
-            # t = (images.shape)[2]
-            # if args.center_frame:
-            #     images = images.squeeze(2)
-            features = model_without_ddp.forward_features(videos.to(device))
-            all_features.append(features)
-        all_features_tensor = torch.cat(all_features,dim=0)
-        gathered_features = [torch.zeros_like(all_features_tensor) for _ in range(world_size)]
-        dist.barrier()
-        dist.all_gather(gathered_features, all_features_tensor)
-        if rank == 0:
-            # Rank 0 is responsible for saving the collected features
-            gathered_features = torch.cat(gathered_features)
-            torch.save(gathered_features.cpu(), save_name)
-        dist.barrier()
-        
-    #free memory
-    del all_features
-    torch.cuda.empty_cache()
-    return
 
 
 
@@ -451,43 +483,8 @@ def get_intervid(args,device):
 
 
 
-def save_internvid_video_features_multinode(model=None,model_without_ddp=None, data_loader=None,dataset=None, save_name=None, batch_size=1000 , device = "cuda",args = None):
-    _make_save_dir(save_name)
-    all_features = []
-    
-    if os.path.exists(save_name):
-        return
-    
-    save_dir = save_name[:save_name.rfind("/")]
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-        world_size = dist.get_world_size()
-        rank = dist.get_rank()
-        if rank == 0:
-            data_loader = tqdm(data_loader)
-    with torch.no_grad():
-        # data_loader = tqdm(data_loader)
-        for images, labels in data_loader:
-            # t = (images.shape)[2]
-            # if args.center_frame:
-            #     images = images.squeeze(2)
-            features = model_without_ddp.encode_vision(images.to(device))
-            all_features.append(features)
-        all_features_tensor = torch.cat(all_features,dim=0)
-        dist.barrier()
-        gathered_features = [torch.zeros_like(all_features_tensor) for _ in range(world_size)]
-        dist.all_gather(gathered_features, all_features_tensor)
-        if rank == 0:
-            # Rank 0 is responsible for saving the collected features
-            gathered_features = torch.cat(gathered_features)
-            torch.save(gathered_features.cpu(), save_name)
-    #free memory
-    del all_features
-    torch.cuda.empty_cache()
-    return
 def save_internvid_video_features(model, dataset, save_name, batch_size=1000 , device = "cuda",args = None):
     _make_save_dir(save_name)
-    all_features = []
     all_labels = []
     if os.path.exists(save_name):
         return
@@ -495,6 +492,10 @@ def save_internvid_video_features(model, dataset, save_name, batch_size=1000 , d
     save_dir = save_name[:save_name.rfind("/")]
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
+    # for end_point in range(5):
+    all_features = []
+        # dataset.end_point = end_point
+        # dl=DataLoader(dataset, batch_size, num_workers=10, pin_memory=True,shuffle=False)
     with torch.no_grad():
         for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=10, pin_memory=True,shuffle=False)):
             # t = (images.shape)[2]
@@ -502,15 +503,14 @@ def save_internvid_video_features(model, dataset, save_name, batch_size=1000 , d
             #     images = images.squeeze(2)
             features = model.encode_vision(images.to(device))
             all_features.append(features.cpu())
-            all_labels+=(labels.tolist())
+            # all_labels+=(labels.tolist())
     torch.save(torch.cat(all_features), save_name)
-    # torch.save(torch.cat(all_labels), os.path.join(save_dir,'label.pt'))
-    with open(os.path.join(save_dir,"label.txt"), "w") as file:
-        for item in all_labels:
-            file.write(f"{item}\n") 
-    #free memory
+        # torch.save(torch.cat(all_labels), os.path.join(save_dir,'label.pt'))
+        # with open(os.path.join(save_dir,"label.txt"), "w") as file:
+        #     for item in all_labels:
+        #         file.write(f"{item}\n") 
+        #free memory
     del all_features
-    del all_labels
     torch.cuda.empty_cache()
     return
 def save_internvid_text_features(model, text, save_name, batch_size=1000):

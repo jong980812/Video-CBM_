@@ -241,7 +241,7 @@ class VisionTransformer(nn.Module):
         x = self.ln_post(x[:, 0, :])
         if video:
             x = rearrange(x, '(b t) d -> b t d',b=B,t=T)
-            x = x.mean(dim=1)
+            # x = x.mean(dim=1)
 
         if self.proj is not None:
             x = x @ self.proj
