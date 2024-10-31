@@ -62,7 +62,7 @@ def save_clip_image_features(model, dataset, save_name, batch_size=1000 , device
             # t = (images.shape)[2]
             # if args.center_frame:
             #     images = images.squeeze(2)
-            features = model.encode_video(images.to(device))# B, D
+            features = model.encode_video(images.to(device))# B,T, D
             all_features.append(features.cpu())
 
     torch.save(torch.cat(all_features), save_name)
@@ -131,7 +131,8 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
     elif "internvid" in args.dual_encoder:
         dual_encoder_model, _ = get_intervid(args,device)
         clip_preprocess = None
-        
+        name = 'ViT-B/16'
+        clip_model, clip_preprocess = clip.load(name, device=device)
 
     #! Load backbone 
     if target_name.startswith("clip_"):
@@ -175,15 +176,18 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
         if not args.saved_features:
             save_lavila_video_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
     elif 'internvid' in args.dual_encoder:
-        s_text = dual_encoder_model.text_encoder.tokenize(["a {}".format(word) for word in s_words], context_length=32).to(device)
+        s_text = clip.tokenize(["A photo of {}.".format(word) for word in s_words]).to(device)
         t_text = dual_encoder_model.text_encoder.tokenize(["{}".format(word.replace('something','')) for word in t_words], context_length=32).to(device)
-        p_text = dual_encoder_model.text_encoder.tokenize(["A person at the {}.".format(word) for word in p_words], context_length=32).to(device)
-        save_internvid_text_features(dual_encoder_model , s_text, s_text_save_name, batch_size)
+        p_text = clip.tokenize(["A Person at the {}.".format(word) for word in p_words]).to(device)
+        # save_internvid_text_features(dual_encoder_model , s_text, s_text_save_name, batch_size)
+        save_clip_text_features(clip_model , s_text, s_text_save_name, batch_size)
+        
         save_internvid_text_features(dual_encoder_model , t_text, t_text_save_name, batch_size)
-        save_internvid_text_features(dual_encoder_model , p_text, p_text_save_name, batch_size)
+        # save_internvid_text_features(dual_encoder_model , p_text, p_text_save_name, batch_size)
+        save_clip_text_features(clip_model , p_text, p_text_save_name, batch_size)
+        
         if not args.saved_features:
             save_internvid_video_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
-            
     if args.saved_features:# 이 아래는 saved_feature이면 안해도됌.
         return
     

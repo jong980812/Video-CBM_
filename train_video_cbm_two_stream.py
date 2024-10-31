@@ -216,7 +216,9 @@ parser.add_argument('--train_mode',type=str,default='para')
 parser.add_argument('--internvid_version',type=str,default='200m')
 parser.add_argument('--only_s',action='store_true')
 parser.add_argument('--multiview',action='store_true')
+parser.add_argument('--sp_clip',action='store_true')
 parser.add_argument('--debug',default=None)
+
 
 def train_cbm_and_save(args):
     video_utils.init_distributed_mode(args)
@@ -249,10 +251,13 @@ def train_cbm_and_save(args):
     
     with open(args.s_concept_set) as f:
         s_concepts = f.read().split("\n")
+        s_concepts = list(set(s_concepts))
     with open(args.t_concept_set) as f:
         t_concepts = f.read().split("\n")
+        t_concepts = list(set(t_concepts))
     with open(args.p_concept_set) as f:
         p_concepts = f.read().split("\n")
+        p_concepts = list(set(p_concepts))
     if args.debug is not None:
         debugging.debug(args,args.debug)
         return
@@ -276,6 +281,9 @@ def train_cbm_and_save(args):
         val_target_save_name = os.path.join(feature_storage,args.data_set,args.backbone,val_target_save_name.split('/')[-1])
         clip_save_name = os.path.join(feature_storage,args.data_set,args.dual_encoder,clip_save_name.split('/')[-1])
         val_clip_save_name = os.path.join(feature_storage,args.data_set,args.dual_encoder,val_clip_save_name.split('/')[-1])
+        if args.sp_clip:
+            sp_clip_save_name = '/data/jong980812/project/Video-CBM-two-stream/new_results/clip_features/activation/kinetics400_train_clip.pt'
+            sp_val_clip_save_name = '/data/jong980812/project/Video-CBM-two-stream/new_results/clip_features/activation/kinetics400_val_clip.pt'
     if args.multiview:
         target_save_name = os.path.join(feature_storage,args.data_set,args.backbone,target_save_name.split('/')[-1]).replace('.pt','_view4_concat.pt')
         # val_target_save_name = os.path.join(feature_storage,args.data_set,args.backbone,val_target_save_name.split('/')[-1]).replace('.pt','_view4_concat.pt')
@@ -284,31 +292,64 @@ def train_cbm_and_save(args):
     
     #load features
     with torch.no_grad():
-        target_features = torch.load(target_save_name, map_location="cpu").float()
+        if args.sp_clip:
+            target_features = torch.load(target_save_name, map_location="cpu").float()
+            
+            val_target_features = torch.load(val_target_save_name, map_location="cpu").float()
         
-        val_target_features = torch.load(val_target_save_name, map_location="cpu").float()
-    
-        image_features = torch.load(clip_save_name, map_location="cpu").float()
-        image_features /= torch.norm(image_features, dim=1, keepdim=True)
+        #! Internvid
+            image_features = torch.load(clip_save_name, map_location="cpu").float()#B,T,D
+            image_features /= torch.norm(image_features, dim=1, keepdim=True)
+            val_image_features = torch.load(val_clip_save_name, map_location="cpu").float()
+            val_image_features /= torch.norm(val_image_features, dim=1, keepdim=True)
+        #! CLIP
+            sp_image_features = torch.load(sp_clip_save_name, map_location="cpu").float()#B,T,D
+            sp_image_features /= torch.norm(sp_image_features, dim=2, keepdim=True)
+            sp_val_image_features = torch.load(sp_val_clip_save_name, map_location="cpu").float()
+            sp_val_image_features /= torch.norm(sp_val_image_features, dim=2, keepdim=True)
 
-        val_image_features = torch.load(val_clip_save_name, map_location="cpu").float()
-        val_image_features /= torch.norm(val_image_features, dim=1, keepdim=True)
+            s_text_features = torch.load(s_text_save_name, map_location="cpu").float()
+            s_text_features /= torch.norm(s_text_features, dim=1, keepdim=True)
+            
+            t_text_features = torch.load(t_text_save_name, map_location="cpu").float()
+            t_text_features /= torch.norm(t_text_features, dim=1, keepdim=True)
+            
+            p_text_features = torch.load(p_text_save_name, map_location="cpu").float()
+            p_text_features /= torch.norm(p_text_features, dim=1, keepdim=True)
+            
+            s_clip_features = (sp_image_features @ s_text_features.T).mean(1)
+            s_val_clip_features = (sp_val_image_features @ s_text_features.T).mean(1)
+            t_clip_features = image_features @ t_text_features.T
+            t_val_clip_features = val_image_features @ t_text_features.T
+            p_clip_features = (sp_image_features @ p_text_features.T).mean(1)
+            p_val_clip_features = (sp_val_image_features @ p_text_features.T).mean(1)
+        else:
+            target_features = torch.load(target_save_name, map_location="cpu").float()
+            
+            val_target_features = torch.load(val_target_save_name, map_location="cpu").float()
+        
+            image_features = torch.load(clip_save_name, map_location="cpu").float()
+            image_features /= torch.norm(image_features, dim=1, keepdim=True)
+            
 
-        s_text_features = torch.load(s_text_save_name, map_location="cpu").float()
-        s_text_features /= torch.norm(s_text_features, dim=1, keepdim=True)
-        
-        t_text_features = torch.load(t_text_save_name, map_location="cpu").float()
-        t_text_features /= torch.norm(t_text_features, dim=1, keepdim=True)
-        
-        p_text_features = torch.load(p_text_save_name, map_location="cpu").float()
-        p_text_features /= torch.norm(p_text_features, dim=1, keepdim=True)
-        
-        s_clip_features = image_features @ s_text_features.T
-        s_val_clip_features = val_image_features @ s_text_features.T
-        t_clip_features = image_features @ t_text_features.T
-        t_val_clip_features = val_image_features @ t_text_features.T
-        p_clip_features = image_features @ p_text_features.T
-        p_val_clip_features = val_image_features @ p_text_features.T
+            val_image_features = torch.load(val_clip_save_name, map_location="cpu").float()
+            val_image_features /= torch.norm(val_image_features, dim=1, keepdim=True)
+
+            s_text_features = torch.load(s_text_save_name, map_location="cpu").float()
+            s_text_features /= torch.norm(s_text_features, dim=1, keepdim=True)
+            
+            t_text_features = torch.load(t_text_save_name, map_location="cpu").float()
+            t_text_features /= torch.norm(t_text_features, dim=1, keepdim=True)
+            
+            p_text_features = torch.load(p_text_save_name, map_location="cpu").float()
+            p_text_features /= torch.norm(p_text_features, dim=1, keepdim=True)
+            
+            s_clip_features = image_features @ s_text_features.T
+            s_val_clip_features = val_image_features @ s_text_features.T
+            t_clip_features = image_features @ t_text_features.T
+            t_val_clip_features = val_image_features @ t_text_features.T
+            p_clip_features = image_features @ p_text_features.T
+            p_val_clip_features = val_image_features @ p_text_features.T
         
         del image_features, s_text_features, t_text_features,p_text_features, val_image_features
     
@@ -347,21 +388,40 @@ def train_cbm_and_save(args):
     #save memory by recalculating
     del s_clip_features, t_clip_features, p_clip_features
     with torch.no_grad():
-        image_features = torch.load(clip_save_name, map_location="cpu").float()
-        image_features /= torch.norm(image_features, dim=1, keepdim=True)
+        if args.sp_clip:
+            image_features = torch.load(clip_save_name, map_location="cpu").float()
+            image_features /= torch.norm(image_features, dim=1, keepdim=True)
+            sp_image_features = torch.load(sp_clip_save_name, map_location="cpu").float()
+            sp_image_features /= torch.norm(sp_image_features, dim=2, keepdim=True)
 
-        s_text_features = torch.load(s_text_save_name, map_location="cpu").float()[s_highest>args.clip_cutoff]
-        s_text_features /= torch.norm(s_text_features, dim=1, keepdim=True)
-        
-        t_text_features = torch.load(t_text_save_name, map_location="cpu").float()[t_highest>args.clip_cutoff]
-        t_text_features /= torch.norm(t_text_features, dim=1, keepdim=True)
-        
-        p_text_features = torch.load(p_text_save_name, map_location="cpu").float()[p_highest>args.clip_cutoff]
-        p_text_features /= torch.norm(p_text_features, dim=1, keepdim=True)
-        
-        s_clip_features = image_features @ s_text_features.T
-        t_clip_features = image_features @ t_text_features.T
-        p_clip_features = image_features @ p_text_features.T
+            s_text_features = torch.load(s_text_save_name, map_location="cpu").float()[s_highest>args.clip_cutoff]
+            s_text_features /= torch.norm(s_text_features, dim=1, keepdim=True)
+            
+            t_text_features = torch.load(t_text_save_name, map_location="cpu").float()[t_highest>args.clip_cutoff]
+            t_text_features /= torch.norm(t_text_features, dim=1, keepdim=True)
+            
+            p_text_features = torch.load(p_text_save_name, map_location="cpu").float()[p_highest>args.clip_cutoff]
+            p_text_features /= torch.norm(p_text_features, dim=1, keepdim=True)
+            
+            s_clip_features = (sp_image_features @ s_text_features.T).mean(1)
+            t_clip_features = image_features @ t_text_features.T
+            p_clip_features = (sp_image_features @ p_text_features.T).mean(1)
+        else:
+            image_features = torch.load(clip_save_name, map_location="cpu").float()
+            image_features /= torch.norm(image_features, dim=1, keepdim=True)
+
+            s_text_features = torch.load(s_text_save_name, map_location="cpu").float()[s_highest>args.clip_cutoff]
+            s_text_features /= torch.norm(s_text_features, dim=1, keepdim=True)
+            
+            t_text_features = torch.load(t_text_save_name, map_location="cpu").float()[t_highest>args.clip_cutoff]
+            t_text_features /= torch.norm(t_text_features, dim=1, keepdim=True)
+            
+            p_text_features = torch.load(p_text_save_name, map_location="cpu").float()[p_highest>args.clip_cutoff]
+            p_text_features /= torch.norm(p_text_features, dim=1, keepdim=True)
+            
+            s_clip_features = image_features @ s_text_features.T
+            t_clip_features = image_features @ t_text_features.T
+            p_clip_features = image_features @ p_text_features.T
         del image_features, s_text_features,t_text_features,p_text_features
     
     s_val_clip_features = s_val_clip_features[:, s_highest>args.clip_cutoff]

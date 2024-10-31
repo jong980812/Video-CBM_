@@ -18,7 +18,7 @@
                 "--nb_classes","400",
                 "--s_concept_set","/data/jong980812/project/Video-CBM-two-stream/data/concept_sets/llava_ver2/k100_spatial_concepts_3frame.txt",
                 "--t_concept_set","/data/jong980812/project/Video-CBM-two-stream/data/concept_sets/human_actions_ver2.txt",
-                "--p_concept_set","/data/jong980812/project/Video-CBM-two-stream/data/concept_sets/human_actions_ver2.txt",
+                "--p_concept_set","/data/jong980812/project/Video-CBM-two-stream/processed_locations.txt",
                 // "--t_concept_set","/data/jong980812/project/Video-CBM/data/concept_sets/ssv2_ost_temporal_concepts.txt",
                 // "--t_text_save_name","/data/jong980812/project/Video-CBM_backup/results/ssv2/finetune_internvid_ost_temporal/activation/ssv2_ost_temporal_concepts_ViT-B16.pt",
                 "--batch_size","32",
@@ -30,17 +30,18 @@
                 "--save_dir","debug",
                 // "--proj_steps","50",
                 "--n_iters","2",
-                "--interpretability_cutoff","0.0",
-                "--clip_cutoff","0.0",
+                "--interpretability_cutoff","0.45",
+                "--clip_cutoff","0.25",
                 "--backbone","vmae_vit_base_patch16_224",
                 "--finetune","/data/datasets/video_checkpoint/kinetics400/k400_finetune.pth",
                 "--dual_encoder","internvid_200m",
                 "--lavila_ckpt","/data/datasets/video_checkpoint/lavila_TSF_B.pth",
                 "--proj_steps","10",
                 "--train_mode","para",
-                // "--multiview",
+                "--sp_clip",
                 "--saved_features",
-                "--debug","/data/jong980812/project/Video-CBM-two-stream/new_results/three_joint/kinetics400/model/kinetics400_cbm_2024_10_24_19_11"
+                // "--multiview",
+                // "--debug","/data/jong980812/project/Video-CBM-two-stream/new_results/three_joint/kinetics400/model/kinetics400_cbm_2024_10_24_19_11"
 
 
             ]
