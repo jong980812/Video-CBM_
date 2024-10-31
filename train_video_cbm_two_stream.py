@@ -205,7 +205,7 @@ parser.add_argument('--data_path', default='data/video_annotation/ucf101', type=
 parser.add_argument('--video-anno-path',type=str)
 parser.add_argument('--center_frame',action='store_true')
 parser.add_argument('--no_aug',type=bool,default=False)
-parser.add_argument('--saved_features',action='store_true')
+parser.add_argument('--saved_features',action='store_true', help="if true, using saved features, not save new .pth")
 parser.add_argument('--dual_encoder', default='clip', choices=['clip', 'lavila', 'internvid','internvid_200m','internvid_10flt'],
                     type=str, help='dataset')
 parser.add_argument('--dual_encoder_frames',type=int,default=16)
@@ -213,6 +213,8 @@ parser.add_argument('--lavila_ckpt',type=str,default=None)
 parser.add_argument('--train_mode',type=str,default='para')
 parser.add_argument('--internvid_version',type=str,default='200m')
 parser.add_argument('--only_s',action='store_true')
+parser.add_argument('--multiview',action='store_true')
+
 
 def train_cbm_and_save(args):
     video_utils.init_distributed_mode(args)
@@ -247,13 +249,7 @@ def train_cbm_and_save(args):
         s_concepts = f.read().split("\n")
     with open(args.t_concept_set) as f:
         t_concepts = f.read().split("\n")
-    #save activations and get save_paths
-    for d_probe in [d_train, d_val]:
-        cbm_utils.save_activations(clip_name = args.dual_encoder, target_name = args.backbone, 
-                               target_layers = [args.feature_layer], d_probe = d_probe,
-                               concept_set = (args.s_concept_set, args.t_concept_set), batch_size = args.batch_size, 
-                               device =device, pool_mode = "avg", save_dir = args.activation_dir,
-                               args=args)
+
         
     target_save_name, clip_save_name, s_text_save_name, t_text_save_name = cbm_utils.get_save_names(args.dual_encoder, args.backbone, 
                                             args.feature_layer,d_train, (args.s_concept_set, args.t_concept_set), "avg", args.activation_dir)
@@ -266,7 +262,11 @@ def train_cbm_and_save(args):
         val_target_save_name = os.path.join(feature_storage,args.data_set,args.backbone,val_target_save_name.split('/')[-1])
         clip_save_name = os.path.join(feature_storage,args.data_set,args.dual_encoder,clip_save_name.split('/')[-1])
         val_clip_save_name = os.path.join(feature_storage,args.data_set,args.dual_encoder,val_clip_save_name.split('/')[-1])
-
+    if args.multiview:
+        target_save_name = os.path.join(feature_storage,args.data_set,args.backbone,target_save_name.split('/')[-1]).replace('.pt','_view4_concat.pt')
+        val_target_save_name = os.path.join(feature_storage,args.data_set,args.backbone,val_target_save_name.split('/')[-1]).replace('.pt','_view4_concat.pt')
+        clip_save_name = os.path.join(feature_storage,args.data_set,args.dual_encoder,clip_save_name.split('/')[-1]).replace('.pt','_view4_concat.pt')
+        val_clip_save_name = os.path.join(feature_storage,args.data_set,args.dual_encoder,val_clip_save_name.split('/')[-1]).replace('.pt','_view4_concat.pt')
     
     #load features
     with torch.no_grad():
