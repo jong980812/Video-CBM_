@@ -24,6 +24,7 @@ arcade
 arch
 archaelogical excavation
 archive
+backyard
 basketball arena
 football arena
 hockey arena
@@ -242,12 +243,14 @@ inside the dairy
 outside the dairy
 dam
 dance school
+darkness
 darkroom
 day care center
 delicatessen
 dentists office
 department store
 departure lounge
+desert
 sand desert
 vegetation desert
 desert road
@@ -307,6 +310,7 @@ fairway
 farm
 fastfood restaurant
 fence
+deck
 cargo deck ferryboat
 inside the ferryboat
 outside the ferryboat
@@ -543,6 +547,7 @@ naval base
 newsroom
 inside the newsstand
 outside the newsstand
+night
 nightclub
 inside the nuclear power plant
 outside the nuclear power plant
@@ -653,6 +658,7 @@ raceway
 raft
 railroad track
 railway yard
+rain
 rainforest
 ramp
 ranch
@@ -677,6 +683,7 @@ revolving door
 rice paddy
 riding arena
 river
+road
 road cut
 rock arch
 inside the roller skating rink
@@ -693,16 +700,16 @@ ruin
 runway
 sacristy
 salt plain
-sand trap
-sandbar
-sandbox
+sand
 sauna
 savanna
 sawmill
+satellite
 schoolhouse
 schoolyard
 science museum
 scriptorium
+sea
 sea cliff
 seawall
 security check point
@@ -710,6 +717,7 @@ server room
 sewer
 sewing room
 shed
+shade
 shipping room
 inside the shipyard
 outside the shipyard
@@ -733,8 +741,10 @@ skyscraper
 inside the skywalk
 outside the skywalk
 slum
+snow
 snowfield
 soccer field
+soil
 massage room spa
 mineral bath spa
 spillway
@@ -746,6 +756,7 @@ football stadium
 outside the stadium
 performance stadium
 soccer stadium
+stadium
 inside the stage
 outside the stage
 staircase
@@ -763,6 +774,7 @@ street
 strip mall
 strip mine
 student residence
+sunlight
 submarine interior
 subway interior
 corridor subway station
@@ -773,8 +785,7 @@ supermarket
 sushi bar
 swamp
 swimming hole
-inside the swimming pool
-outside the swimming pool
+swimming pool
 inside the synagogue
 outside the synagogue
 taiga

@@ -125,8 +125,8 @@ def spatio_temporal_three_joint(args,
     proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(s_concepts), bias=False)
     proj_layer.load_state_dict({"weight":s_W_c})
     with torch.no_grad():
-        train_c = proj_layer(target_features.detach())
-        val_c = proj_layer(val_target_features.detach())
+        train_c = proj_layer(target_features.detach()) # torch.save(train_c, "/data/datasets/videocbm/concept_feature/s_concept.pt")
+        val_c = proj_layer(val_target_features.detach()) #
         
         train_mean = torch.mean(train_c, dim=0, keepdim=True)
         train_std = torch.std(train_c, dim=0, keepdim=True)
@@ -301,15 +301,16 @@ def spatio_temporal_parallel(args,
     val_data_t.end_point = 2
     device = torch.device(args.device)
     
-    s_model,t_model = cbm.load_cbm_two_stream(save_name, device,args)
+    s_model,t_model = cbm.load_cbm_two_stream(save_name, device, args)
 
     print("!****! Start test Spatio")
     accuracy = cbm_utils.get_accuracy_cbm(s_model, val_data_t, device,32,10)
     print("!****! Spatio Accuracy: {:.2f}%".format(accuracy*100))
     
-    print("?***? Start test Temporal")
-    accuracy = cbm_utils.get_accuracy_cbm(t_model, val_data_t, device,32,10)
-    print("?****? Temporal Accuracy: {:.2f}%".format(accuracy*100))
+    if not args.only_s:
+        print("?***? Start test Temporal")
+        accuracy = cbm_utils.get_accuracy_cbm(t_model, val_data_t, device,32,10)
+        print("?****? Temporal Accuracy: {:.2f}%".format(accuracy*100))
     
     return
 

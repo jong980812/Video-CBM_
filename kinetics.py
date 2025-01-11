@@ -50,6 +50,9 @@ class VideoClsDataset(Dataset):
 
         import pandas as pd
         cleaned = pd.read_csv(self.anno_path, header=None, delimiter=',')
+        if args.monitor_class is not None:
+            filtered_cleaned = cleaned[cleaned[1].isin(args.monitor_class)]
+            cleaned = filtered_cleaned.reset_index(drop=True)
         self.dataset_samples = list(cleaned.values[:, 0])
         self.label_array = list(cleaned.values[:, 1])
 

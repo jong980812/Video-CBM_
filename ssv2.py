@@ -16,7 +16,7 @@ class SSVideoClsDataset(Dataset):
     def __init__(self, anno_path, data_path, mode='train', clip_len=8,
                 crop_size=224, short_side_size=256, new_height=256,
                 new_width=340, keep_aspect_ratio=True, num_segment=1,
-                num_crop=1, test_num_segment=10, test_num_crop=3, args=None):
+                num_crop=1, test_num_segment=10, test_num_crop=3, args=None, end_point=None):
         self.anno_path = anno_path
         self.data_path = data_path
         self.mode = mode
@@ -36,6 +36,9 @@ class SSVideoClsDataset(Dataset):
         self.center_frame = args.center_frame
         self.get_sample_path=False
         self.no_aug = args.no_aug
+        self.rand_erase = False
+        self.visualize=False
+        self.end_point = end_point
         if self.mode in ['train']:
             self.aug = True
             if self.args.reprob > 0:
@@ -45,6 +48,9 @@ class SSVideoClsDataset(Dataset):
 
         import pandas as pd
         cleaned = pd.read_csv(self.anno_path, header=None, delimiter=' ')
+        if args.monitor_class is not None:
+            filtered_cleaned = cleaned[cleaned[1].isin(args.monitor_class)]
+            cleaned = filtered_cleaned.reset_index(drop=True)
         self.dataset_samples = list(cleaned.values[:, 0])
         self.label_array = list(cleaned.values[:, 1])
 
@@ -121,6 +127,15 @@ class SSVideoClsDataset(Dataset):
 
         elif self.mode == 'validation':
             sample = os.path.join(self.data_path,self.dataset_samples[index])
+            if self.visualize:
+                buffers=[]
+                for i in range(5):
+                    self.end_point=i
+                    buffer = self.loadvideo_decord(sample)
+                    buffer = self.data_transform(buffer)
+                    buffers.append(buffer.unsqueeze(0))
+                buffers = torch.cat(buffers,dim=0)#5, 3,16,224,224
+                return buffers,self.label_array[index],sample
             buffer = self.loadvideo_decord(sample)
             if len(buffer) == 0:
                 while len(buffer) == 0:
@@ -133,6 +148,7 @@ class SSVideoClsDataset(Dataset):
                 buffer = buffer[:,self.clip_len//2,:,:]
                 return buffer,self.label_array[index],sample
             return buffer, self.label_array[index]#, sample.split("/")[-1].split(".")[0]
+        
 
         elif self.mode == 'test':
             sample = self.test_dataset[index]

@@ -13,6 +13,10 @@ from transforms import Permute
 import torchvision.transforms as transforms
 import torchvision.transforms._transforms_video as transforms_video
 import video_utils
+import contribution_analysis
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+
 PM_SUFFIX = {"max":"_max", "avg":""}
 
 def save_target_activations(target_model, dataset, save_name, target_layers = ["layer4"], batch_size = 1000,
@@ -284,20 +288,40 @@ def _make_save_dir(save_name):
         os.makedirs(save_dir)
     return
 
+def cluster_classes(X, max_k=10):
+    best_k = 2
+    best_score = -1  # 실루엣 score는 -1에서 1 사이
+
+    for k in range(2, max_k + 1):  # 최소 2개 클러스터부터 최대 max_k까지 시도
+        kmeans = KMeans(n_clusters=k, n_init=10, random_state=0)
+        cluster = kmeans.fit_predict(X)
+        score = silhouette_score(X, cluster)
+        print(f"Silhouette Score for {k} clusters: {score}")
+        
+        if score > best_score:
+            best_k = k
+            best_score = score
+
+    kmeans = KMeans(n_clusters=best_k, random_state=0)
+    cluster = kmeans.fit_predict(X)
+    
+    print(f"Best number of clusters: {best_k} with Silhouette Score: {best_score}")
+    return cluster, best_k
+
 def get_accuracy_cbm(model, dataset, device, batch_size=250, num_workers=10):
     correct = 0
     total = 0
     model.eval()
-    for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=10,
-                                           pin_memory=True)):
+    for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=10,pin_memory=True)):
+        
         with torch.no_grad():
-            #outs = target_model(images.to(device))
             outs, concept_activation = model(images.to(device))
             pred = torch.argmax(outs, dim=1)
             correct += torch.sum(pred.cpu()==labels)
             total += len(labels)
-    return correct/total
-def get_accuracy_and_concept_distribution_cbm(model,k,dataset, device, batch_size=250, num_workers=10):
+    return correct / total
+
+def get_accuracy_and_concept_distribution_cbm(model,k,dataset, device, batch_size=250, num_workers=10,args=None, clustering=True):
     correct = 0
     total = 0
     num_object,num_action,num_scene=model.s_proj_layer.weight.shape[0],model.t_proj_layer.weight.shape[0],model.p_proj_layer.weight.shape[0]
@@ -312,9 +336,13 @@ def get_accuracy_and_concept_distribution_cbm(model,k,dataset, device, batch_siz
     total_object_count = 0
     total_action_count = 0
     total_scene_count = 0
+    class_concept =[] # for clustering
     model.eval()
-    for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=10,
-                                           pin_memory=True)):
+    
+    if args.save_contibution:
+        with open(os.path.join(args.debug,"class_concept_contribution.csv"), "w") as f:
+            f.write("label,topk_indices\n")
+    for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=10, pin_memory=True)):
         with torch.no_grad():
             #outs = target_model(images.to(device))
             outs, concept_activation = model(images.to(device))
@@ -340,6 +368,29 @@ def get_accuracy_and_concept_distribution_cbm(model,k,dataset, device, batch_siz
                 total_object_count += object_count
                 total_action_count += action_count
                 total_scene_count += scene_count
+                
+                if args.save_contibution:
+                    with open(os.path.join(args.debug,"class_concept_contribution.csv"), "a") as f:
+                        topk_indices_str = ",".join(map(str, topk_indices[i].cpu().tolist()))
+                        f.write(f"{labels[i].item()},{topk_indices_str}\n")
+    
+    if clustering is True:
+        for j in range(images.shape[0]):
+            current_label = labels[j]
+            class_concept[current_label] = concept_contribution[j]
+        clusters, optimal_cluster = cluster_classes(class_concept, max_k=100)
+        cluster_output = os.path.join(args.debug, f'clusters_{optimal_cluster}.txt')
+        output_file = os.path.join()
+        with open(output_file, 'w') as f:
+            for i in range(optimal_cluster):
+                # 클러스터 i에 속한 샘플들의 인덱스를 찾습니다
+                samples_in_cluster = [index for index, label in enumerate(clusters) if label == i]
+                f.write(f"Cluster {i}:\n")
+                f.write(", ".join(map(str, samples_in_cluster)) + "\n\n")
+        return
+    
+    if args.save_contibution:                    
+        contribution_analysis.contribution_analysis(args)
     
     return correct/total,[total_object_count,total_action_count,total_scene_count]
 
@@ -371,6 +422,8 @@ def get_concept_act_by_pred(model, dataset, device):
         concept_acts_by_pred.append(torch.mean(concept_acts[preds==i], dim=0))
     concept_acts_by_pred = torch.stack(concept_acts_by_pred, dim=0)
     return concept_acts_by_pred
+
+
 
 
 def save_vmae_video_features(model, dataset, save_name, batch_size=1000 , device = "cuda",args = None):

@@ -1,772 +1,766 @@
-People poke holes in soft objects.
-People are bending forward.
-People pour substances into other objects.
-People are skipping in a playful manner.
-People are snapping their fingers rhythmically.
-People drop objects into other objects.
-People are standing with feet shoulder-width apart.
-People are stretching their arms upward.
-People are moving their hands in front of them.
-People are standing with their arms crossed in front of them.
-People are twisting their bodies from left to right.
-People drop objects in front of others.
-People are balancing on one leg with their arms out.
+A person poke holes in soft objects.
+A person is bending forward.
+A person pour substances into other objects.
+A person is skipping in a playful manner.
+A person is snapping their fingers rhythmically.
+A person drop objects into other objects.
+A person is standing with feet shoulder-width apart.
+A person is stretching their arms upward.
+A person is moving their hands in front of them.
+A person is standing with their arms crossed in front of them.
+A person is twisting their bodies from left to right.
+A person drop objects in front of others.
+A person is balancing on one leg with their arms out.
 Objects deflect off each other.
-People are running in place. 
-People poke holes in substances.
-People are standing with arms akimbo.
-People are twisting their bodies in a half-circle.
-People dig objects out.
-People are standing with their legs wide apart and their arms at their sides.
-People are standing with their hands resting on their knees.
-People are shifting their feet in a slow side-to-side motion.
-People pour substances onto objects.
-People spread substances onto objects.
-People are lowering their heads slowly.
-People are leaning their heads on their hands.
-People are tilting their heads backward.
-People are rotating their hips in circles.
-People are stepping in time with each other.
-People are standing still with feet together.
-People are bouncing their shoulders up and down in a rhythm.
-People are stretching their fingers.
-People are stepping backward.
-People spill substances behind objects.
-People turn cameras left while filming.
-People are looking down.
-People are twisting their torsos.
-People are snapping their fingers.
-People are jumping with their feet together.
-People are shuffling their feet slowly.
-People are hopping forward in short bursts.
-People are leaning forward slightly with hands on their hips.
-People close objects.
-People try to bend unbendable objects.
-People tear objects into pieces.
-People show empty objects.
-People move objects apart.
-People are flexing their shoulders up and down.
-People are standing up.
-People are swaying from side to side.
-People are looking left and right.
-People are moving their shoulders in circles.
-People move objects down.
+A person is running in place. 
+A person poke holes in substances.
+A person is standing with arms akimbo.
+A person is twisting their bodies in a half-circle.
+A person dig objects out.
+A person is standing with their legs wide apart and their arms at their sides.
+A person is standing with their hands resting on their knees.
+A person is shifting their feet in a slow side-to-side motion.
+A person pour substances onto objects.
+A person spread substances onto objects.
+A person is lowering their heads slowly.
+A person is leaning their heads on their hands.
+A person is tilting their heads backward.
+A person is rotating their hips in circles.
+A person is stepping in time with each other.
+A person is standing still with feet together.
+A person is bouncing their shoulders up and down in a rhythm.
+A person is stretching their fingers.
+A person is stepping backward.
+A person spill substances behind objects.
+A person turn cameras left while filming.
+A person is looking down.
+A person is twisting their torsos.
+A person is snapping their fingers.
+A person is jumping with their feet together.
+A person is shuffling their feet slowly.
+A person is hopping forward in short bursts.
+A person is leaning forward slightly with hands on their hips.
+A person close objects.
+A person try to bend unbendable objects.
+A person tear objects into pieces.
+A person show empty objects.
+A person move objects apart.
+A person is flexing their shoulders up and down.
+A person is standing up.
+A person is swaying from side to side.
+A person is looking left and right.
+A person is moving their shoulders in circles.
+A person move objects down.
 Objects collide and stop.
-People are crossing one leg over the other while sitting.
-People are shifting their hips in small circles.
-People are turning their heads right.
-People are standing with their hands on their heads.
-People are stepping forward and lunging with one leg.
-People are flexing their toes while standing.
-People are taking small steps backward.
-People are closing their eyes while standing still.
-People are shadowboxing.
-People are stomping their feet rhythmically.
-People are bouncing from foot to foot in small movements.
-People are shaking out their arms after a workout.
-People are waving their hands.
-People are circling their arms slowly.
-People are skipping forward with light steps.
-People hold objects.
-People are shuffling sideways.
-People are nodding their heads in agreement.
-People hold objects behind other objects.
-People are swinging their arms back and forth.
-People move objects towards other objects.
-People are leaning to one side and stretching their arms out.
-People are nodding their heads.
-People are yawning.
-People are humming.
-People are crouching low and then jumping up quickly.
-People are bowing slightly.
-People move objects across surfaces so they fall.
-People are standing with their arms crossed.
-People hold objects over other objects.
-People are sitting down.
-People are bouncing on their toes with quick movements.
-People are walking in a straight line.
-People are flexing their knees slightly.
-People are jogging in place with high knees.
-People are bouncing on their heels while shifting weight.
-People are turning in circles slowly while standing.
-People move parts of objects.
-People are bending their elbows.
-People are running.
-People touch parts of objects.
-People take objects out of other objects.
-People are whistling.
-People are stretching their arms overhead and twisting their bodies.
-People are raising their arms in celebration.
-People are shifting their body weight from one leg to the other.
-People tip objects over.
-People turn objects upside down.
-People are stepping forward with one foot and balancing.
-People are walking slowly.
-People are pressing their palms together in front of their faces.
-People are marching in place with exaggerated knee lifts.
-People are jumping in place.
-People are lifting their legs outward while standing on one leg.
-People are tilting their heads sideways.
-People are bouncing their shoulders while standing.
-People are tilting their heads.
-People are cracking their knuckles.
-People throw objects onto surfaces.
-People are scratching their heads.
-People are stretching their legs forward.
+A person is crossing one leg over the other while sitting.
+A person is shifting their hips in small circles.
+A person is turning their heads right.
+A person is standing with their hands on their heads.
+A person is stepping forward and lunging with one leg.
+A person is flexing their toes while standing.
+A person is taking small steps backward.
+A person is closing their eyes while standing still.
+A person is shadowboxing.
+A person is stomping their feet rhythmically.
+A person is bouncing from foot to foot in small movements.
+A person is shaking out their arms after a workout.
+A person is waving their hands.
+A person is circling their arms slowly.
+A person is skipping forward with light steps.
+A person hold objects.
+A person is shuffling sideways.
+A person is nodding their heads in agreement.
+A person hold objects behind other objects.
+A person is swinging their arms back and forth.
+A person move objects towards other objects.
+A person is leaning to one side and stretching their arms out.
+A person is nodding their heads.
+A person is yawning.
+A person is humming.
+A person is crouching low and then jumping up quickly.
+A person is bowing slightly.
+A person move objects across surfaces so they fall.
+A person is standing with their arms crossed.
+A person hold objects over other objects.
+A person is sitting down.
+A person is bouncing on their toes with quick movements.
+A person is walking in a straight line.
+A person is flexing their knees slightly.
+A person is jogging in place with high knees.
+A person is bouncing on their heels while shifting weight.
+A person is turning in circles slowly while standing.
+A person move parts of objects.
+A person is bending their elbows.
+A person is running.
+A person touch parts of objects.
+A person take objects out of other objects.
+A person is whistling.
+A person is stretching their arms overhead and twisting their bodies.
+A person is raising their arms in celebration.
+A person is shifting their body weight from one leg to the other.
+A person tip objects over.
+A person turn objects upside down.
+A person is stepping forward with one foot and balancing.
+A person is walking slowly.
+A person is pressing their palms together in front of their faces.
+A person is marching in place with exaggerated knee lifts.
+A person is jumping in place.
+A person is lifting their legs outward while standing on one leg.
+A person is tilting their heads sideways.
+A person is bouncing their shoulders while standing.
+A person is tilting their heads.
+A person is cracking their knuckles.
+A person throw objects onto surfaces.
+A person is scratching their heads.
+A person is stretching their legs forward.
 Objects fall slowly like paper.
-People are moving their hips from side to side.
-People are walking on tiptoes.
-People are jumping up and down.
-People are pursing their lips.
-People are taking deep breaths.
-People are clasping their hands behind their backs.
-People are curling their toes.
-People are moving their arms across their chests.
-People are twisting their torsos from side to side.
-People are stepping backward cautiously.
-People are stepping side to side in a rhythm.
-People squeeze objects.
-People are rotating their necks in a circular motion.
-People poke stacks of objects so they collapse.
-People are shaking their arms loose.
-People tilt objects with things on them.
-People show photos to the camera.
-People are stretching their bodies.
-People are doing high kicks.
-People are coughing.
-People are leaning forward slightly.
-People are stretching their necks to the left and right.
-People poke objects so they fall over.
-People take objects from places.
-People are shifting their balance.
-People are twisting their ankles in circles.
-People are performing planks.
-People are tapping their toes on the ground.
-People are balancing on their toes.
-People are standing with arms relaxed by their sides.
-People are standing with their arms raised above their heads.
-People are rotating their wrists slowly.
-People are standing still with their arms hanging loosely.
-People are raising their eyebrows.
-People are doing small, quick jumps.
-People bury objects in something.
-People are bouncing lightly while standing in place.
-People are stretching their arms across their chests.
-People hold objects in front of other objects.
-People are kicking their legs sideways.
-People are standing with arms extended outward.
-People are bouncing lightly while shifting from foot to foot.
-People spill substances onto objects.
-People lift surfaces with objects on them.
-People are rotating their wrists.
-People are crouching with their hands on their knees.
-People are stepping in rhythm with the beat of music.
-People fold objects.
-People show objects inside other objects.
-People are rotating their hips while standing.
-People plug objects into others.
-People are skipping while moving forward.
-People are marching forward with high knees.
-People are flexing their toes.
-People are stretching their arms over their heads and yawning.
-People are walking quickly in short bursts.
-People drop objects behind others.
-People are shifting their feet apart and together.
-People are hopping on one foot.
-People move objects across surfaces without falling.
-People are rotating their ankles.
-People are crouching low to the ground and standing back up.
-People move objects closer together.
-People are standing on one foot with arms outstretched.
-People are waving with both hands.
-People are raising one hand.
-People are tapping their feet.
-People throw objects against other objects.
-People are pacing back and forth.
-People are crouching down.
-People are shifting their shoulders up and down.
-People are turning around slowly.
-People are hopping backward with small jumps.
-People are covering their faces with their hands.
-People are bending their knees slightly.
-People are stepping from side to side in small movements.
-People stack objects.
-People are lifting their arms in slow circles.
-People are stretching their necks to one side.
-People are sighing.
-People are relaxing their bodies.
-People are touching their toes.
-People are performing cartwheels.
-People are stepping side to side.
-People try to attach objects but they don’t stick.
-People are leaning forward with their hands on their knees.
-People are blinking repeatedly.
-People are folding their arms over their chests.
-People are shaking their heads.
-People are stomping their feet.
-People are rubbing their eyes.
-People turn cameras right while filming.
-People are doing sit-ups.
-People are flexing their muscles.
-People move objects away from other objects.
-People are shifting from one leg to the other.
-People are doing lunges.
-People are biting their lips.
-People are hopping from one foot to the other.
-People are bending backward slightly at the waist.
-People are walking briskly while shaking their hands out.
-People poke objects so they slightly move.
-People are stepping side to side slowly.
-People are dropping their heads forward.
-People are shaking their heads in disagreement.
-People let objects roll on flat surfaces.
-People scoop objects up with other objects.
-People are walking in zigzags.
-People are marching in place.
-People are raising their arms overhead and stretching.
-People throw objects.
-People are rolling their heads in small circles.
-People are shaking out their hands after exercise.
-People are balancing on one foot.
-People are lifting their knees toward their chests.
-People are smiling.
-People try to put objects into other objects but fail.
-People are standing on their toes and reaching upward.
-People are bouncing on their heels.
-People are dancing.
-People turn cameras downward while filming.
-People pile up objects.
-People are balancing on the balls of their feet.
-People are crouching down and standing up repeatedly.
-People are rocking on their heels while standing still.
-People are standing still with their hands on their hips.
-People are jumping over a small gap.
-People are rolling their shoulders.
-People are bouncing on their toes.
-People are raising their hands above their heads.
-People are pointing with their fingers.
-People are leaning forward from the waist.
-People lift objects up and then drop them.
-People pick up objects.
-People are laughing.
-People are walking slowly with deliberate steps.
-People are bending sideways.
-People are kicking one leg forward.
-People are balancing on one foot with arms extended.
-People are walking briskly.
-People attach objects to other objects.
-People are stepping forward with their arms at their sides.
-People break objects by bending them.
-People are bouncing lightly from heel to toe.
-People are walking backward slowly.
-People are landing softly after a jump.
-People are standing with their hands on their hips, looking up.
-People bend objects so they deform.
-People turn cameras upward while filming.
-People are standing with one leg crossed over the other.
-People are lifting their knees up high while jogging.
-People are rolling on the ground.
-People move objects up.
-People are bowing deeply.
-People are crossing their legs.
-People are swaying their arms while walking.
-People are pressing their palms together.
-People are walking in circles.
-People are clapping their hands.
-People are bouncing from foot to foot.
-People are stretching their backs by arching forward.
-People are jumping forward.
-People poke objects so they spin.
-People are stretching their arms wide and rotating their wrists.
-People are shrugging their shoulders.
-People are holding their breath.
-People are shaking their legs out.
-People are shifting their weight from one foot to another.
-People are skipping in a straight line.
-People are jumping on both feet.
-People are stretching their backs with arms overhead.
-People are rocking back on their heels.
-People show objects next to other objects.
-People are flexing their biceps.
-People are standing with their feet wide apart.
-People make objects pass by each other.
-People are raising their knees high while walking.
-People are shaking their heads slowly from side to side.
-People are rotating their shoulders one by one.
-People cover objects with other objects.
-People are walking backward.
-People are hopping in place with light bounces.
-People are wiping sweat from their faces.
-People are lifting one leg and holding it in the air.
-People show objects on top of other objects.
-People are lowering their arms slowly.
-People are gesturing with their hands.
-People are crossing their arms.
-People are tapping their fingers lightly on their legs.
-People are jogging.
-People are stretching their legs.
-People are moving their arms in a circular motion.
-People hit objects with other objects.
-People are raising their arms to shoulder height.
-People are drumming their fingers on a surface.
-People make objects collide.
-People are squatting down.
-People are spreading their fingers wide.
-People are stretching their backs.
-People move away from objects with a camera.
-People are crossing a room.
-People approach with a camera.
-People are doing a half-turn.
-People are walking at a brisk pace.
-People are rolling their heads in circles.
-People are stepping from side to side while standing.
-People are tilting their heads up and down.
-People are squatting with their hands on the floor.
-People are standing with their legs crossed at the ankles.
-People are leaning backward.
-People are crouching low to the ground.
-People are stretching their legs wide.
-People are twisting their necks from side to side.
-People are wiggling their fingers.
-People are kicking their legs forward and backward.
-People are jogging on the spot.
-People wipe objects off surfaces.
-People throw objects in the air and catch them.
-People are stepping forward with one foot and balancing on it.
-People are stretching their arms across their bodies.
-People are clasping their hands together in front of their bodies.
-People are stretching their legs by pulling one foot behind them.
-People are shrugging one shoulder at a time.
-People are standing on one leg.
-People are leaning forward.
-People are shaking their heads quickly.
-People are jogging lightly in place.
-People are swinging their legs back and forth.
-People are tapping their heels on the ground lightly.
-People are rolling their shoulders backward.
-People are tapping their knees.
-People pour substances out of objects.
-People are standing on tiptoes.
-People are bouncing in place.
-People are twisting their torsos while seated.
-People are standing still with hands relaxed by their sides.
-People are twisting their bodies from side to side.
-People sprinkle substances onto objects.
-People are exhaling deeply.
-People are spreading their arms wide.
-People are shaking their heads slowly.
-People are uncrossing their legs.
-People are standing with their feet together and their arms by their sides.
-People are standing still.
-People are tapping their feet on the ground rhythmically.
-People are skipping to the side.
-People are standing with their feet crossed at the ankles.
-People are rocking side to side.
-People open objects.
-People plug objects in and remove them.
-People are bouncing lightly on their toes while standing.
-People are turning to face each other.
-People are rolling their shoulders slowly.
-People are turning their heads left.
-People are stepping side to side and leaning slightly.
-People are swaying from left to right while standing.
-People are crouching down low and looking upward.
-People are rolling their wrists in circles.
-People are holding their hands in front of their faces.
-People let objects roll down slanted surfaces.
-People are leaning against a wall.
-People are doing jumping jacks.
-People are extending their arms to the sides.
-People are bouncing lightly on their feet.
-People are clenching their fists.
-People are doing somersaults.
-People are spinning in circles.
-People are sucking in their cheeks.
-People are tapping their fingers against their thighs.
-People are walking quickly while swinging their arms.
-People are crouching down low and springing back up.
-People are doing push-ups.
-People are stretching their arms in front of them.
-People are walking forward with small, careful steps.
-People are walking with long strides.
-People are stepping forward with arms extended.
+A person is moving their hips from side to side.
+A person is walking on tiptoes.
+A person is jumping up and down.
+A person is pursing their lips.
+A person is taking deep breaths.
+A person is clasping their hands behind their backs.
+A person is curling their toes.
+A person is moving their arms across their chests.
+A person is twisting their torsos from side to side.
+A person is stepping backward cautiously.
+A person is stepping side to side in a rhythm.
+A person squeeze objects.
+A person is rotating their necks in a circular motion.
+A person poke stacks of objects so they collapse.
+A person is shaking their arms loose.
+A person tilt objects with things on them.
+A person show photos to the camera.
+A person is stretching their bodies.
+A person is coughing.
+A person is leaning forward slightly.
+A person is stretching their necks to the left and right.
+A person poke objects so they fall over.
+A person take objects from places.
+A person is shifting their balance.
+A person is twisting their ankles in circles.
+A person is performing planks.
+A person is tapping their toes on the ground.
+A person is balancing on their toes.
+A person is standing with arms relaxed by their sides.
+A person is standing with their arms raised above their heads.
+A person is rotating their wrists slowly.
+A person is standing still with their arms hanging loosely.
+A person is raising their eyebrows.
+A person is doing small, quick jumps.
+A person bury objects in something.
+A person is bouncing lightly while standing in place.
+A person is stretching their arms across their chests.
+A person hold objects in front of other objects.
+A person is kicking their legs sideways.
+A person is standing with arms extended outward.
+A person is bouncing lightly while shifting from foot to foot.
+A person spill substances onto objects.
+A person lift surfaces with objects on them.
+A person is rotating their wrists.
+A person is crouching with their hands on their knees.
+A person is stepping in rhythm with the beat of music.
+A person fold objects.
+A person show objects inside other objects.
+A person is rotating their hips while standing.
+A person plug objects into others.
+A person is skipping while moving forward.
+A person is marching forward with high knees.
+A person is flexing their toes.
+A person is stretching their arms over their heads and yawning.
+A person is walking quickly in short bursts.
+A person drop objects behind others.
+A person is shifting their feet apart and together.
+A person is hopping on one foot.
+A person move objects across surfaces without falling.
+A person is rotating their ankles.
+A person is crouching low to the ground and standing back up.
+A person move objects closer together.
+A person is standing on one foot with arms outstretched.
+A person is waving with both hands.
+A person is raising one hand.
+A person is tapping their feet.
+A person throw objects against other objects.
+A person is pacing back and forth.
+A person is crouching down.
+A person is shifting their shoulders up and down.
+A person is turning around slowly.
+A person is hopping backward with small jumps.
+A person is covering their faces with their hands.
+A person is bending their knees slightly.
+A person is stepping from side to side in small movements.
+A person stack objects.
+A person is lifting their arms in slow circles.
+A person is stretching their necks to one side.
+A person is sighing.
+A person is relaxing their bodies.
+A person is touching their toes.
+A person is performing cartwheels.
+A person is stepping side to side.
+A person try to attach objects but they don’t stick.
+A person is leaning forward with their hands on their knees.
+A person is blinking repeatedly.
+A person is folding their arms over their chests.
+A person is shaking their heads.
+A person is stomping their feet.
+A person is rubbing their eyes.
+A person turn cameras right while filming.
+A person is flexing their muscles.
+A person move objects away from other objects.
+A person is shifting from one leg to the other.
+A person is biting their lips.
+A person is hopping from one foot to the other.
+A person is bending backward slightly at the waist.
+A person is walking briskly while shaking their hands out.
+A person poke objects so they slightly move.
+A person is stepping side to side slowly.
+A person is dropping their heads forward.
+A person is shaking their heads in disagreement.
+A person let objects roll on flat surfaces.
+A person scoop objects up with other objects.
+A person is walking in zigzags.
+A person is marching in place.
+A person is raising their arms overhead and stretching.
+A person throw objects.
+A person is rolling their heads in small circles.
+A person is shaking out their hands after exercise.
+A person is balancing on one foot.
+A person is lifting their knees toward their chests.
+A person is smiling.
+A person try to put objects into other objects but fail.
+A person is standing on their toes and reaching upward.
+A person is bouncing on their heels.
+A person is dancing.
+A person turn cameras downward while filming.
+A person pile up objects.
+A person is balancing on the balls of their feet.
+A person is crouching down and standing up repeatedly.
+A person is rocking on their heels while standing still.
+A person is standing still with their hands on their hips.
+A person is jumping over a small gap.
+A person is rolling their shoulders.
+A person is bouncing on their toes.
+A person is raising their hands above their heads.
+A person is pointing with their fingers.
+A person is leaning forward from the waist.
+A person lift objects up and then drop them.
+A person pick up objects.
+A person is laughing.
+A person is walking slowly with deliberate steps.
+A person is bending sideways.
+A person is kicking one leg forward.
+A person is balancing on one foot with arms extended.
+A person is walking briskly.
+A person attach objects to other objects.
+A person is stepping forward with their arms at their sides.
+A person break objects by bending them.
+A person is bouncing lightly from heel to toe.
+A person is walking backward slowly.
+A person is landing softly after a jump.
+A person is standing with their hands on their hips, looking up.
+A person bend objects so they deform.
+A person turn cameras upward while filming.
+A person is standing with one leg crossed over the other.
+A person is lifting their knees up high while jogging.
+A person is rolling on the ground.
+A person move objects up.
+A person is bowing deeply.
+A person is crossing their legs.
+A person is swaying their arms while walking.
+A person is pressing their palms together.
+A person is walking in circles.
+A person is clapping their hands.
+A person is bouncing from foot to foot.
+A person is stretching their backs by arching forward.
+A person is jumping forward.
+A person poke objects so they spin.
+A person is stretching their arms wide and rotating their wrists.
+A person is shrugging their shoulders.
+A person is holding their breath.
+A person is shaking their legs out.
+A person is shifting their weight from one foot to another.
+A person is skipping in a straight line.
+A person is jumping on both feet.
+A person is stretching their backs with arms overhead.
+A person is rocking back on their heels.
+A person show objects next to other objects.
+A person is flexing their biceps.
+A person is standing with their feet wide apart.
+A person make objects pass by each other.
+A person is raising their knees high while walking.
+A person is shaking their heads slowly from side to side.
+A person is rotating their shoulders one by one.
+A person cover objects with other objects.
+A person is walking backward.
+A person is hopping in place with light bounces.
+A person is wiping sweat from their faces.
+A person is lifting one leg and holding it in the air.
+A person show objects on top of other objects.
+A person is lowering their arms slowly.
+A person is gesturing with their hands.
+A person is crossing their arms.
+A person is tapping their fingers lightly on their legs.
+A person is jogging.
+A person is stretching their legs.
+A person is moving their arms in a circular motion.
+A person hit objects with other objects.
+A person is raising their arms to shoulder height.
+A person is drumming their fingers on a surface.
+A person make objects collide.
+A person is squatting down.
+A person is spreading their fingers wide.
+A person is stretching their backs.
+A person move away from objects with a camera.
+A person is crossing a room.
+A person approach with a camera.
+A person is doing a half-turn.
+A person is walking at a brisk pace.
+A person is rolling their heads in circles.
+A person is stepping from side to side while standing.
+A person is tilting their heads up and down.
+A person is squatting with their hands on the floor.
+A person is standing with their legs crossed at the ankles.
+A person is leaning backward.
+A person is crouching low to the ground.
+A person is stretching their legs wide.
+A person is twisting their necks from side to side.
+A person is wiggling their fingers.
+A person is kicking their legs forward and backward.
+A person is jogging on the spot.
+A person wipe objects off surfaces.
+A person throw objects in the air and catch them.
+A person is stepping forward with one foot and balancing on it.
+A person is stretching their arms across their bodies.
+A person is clasping their hands together in front of their bodies.
+A person is stretching their legs by pulling one foot behind them.
+A person is shrugging one shoulder at a time.
+A person is standing on one leg.
+A person is leaning forward.
+A person is shaking their heads quickly.
+A person is jogging lightly in place.
+A person is swinging their legs back and forth.
+A person is tapping their heels on the ground lightly.
+A person is rolling their shoulders backward.
+A person is tapping their knees.
+A person pour substances out of objects.
+A person is standing on tiptoes.
+A person is bouncing in place.
+A person is twisting their torsos while seated.
+A person is standing still with hands relaxed by their sides.
+A person is twisting their bodies from side to side.
+A person sprinkle substances onto objects.
+A person is exhaling deeply.
+A person is spreading their arms wide.
+A person is shaking their heads slowly.
+A person is uncrossing their legs.
+A person is standing with their feet together and their arms by their sides.
+A person is standing still.
+A person is tapping their feet on the ground rhythmically.
+A person is skipping to the side.
+A person is standing with their feet crossed at the ankles.
+A person is rocking side to side.
+A person open objects.
+A person plug objects in and remove them.
+A person is bouncing lightly on their toes while standing.
+A person is turning to face each other.
+A person is rolling their shoulders slowly.
+A person is turning their heads left.
+A person is stepping side to side and leaning slightly.
+A person is swaying from left to right while standing.
+A person is crouching down low and looking upward.
+A person is rolling their wrists in circles.
+A person is holding their hands in front of their faces.
+A person let objects roll down slanted surfaces.
+A person is leaning against a wall.
+A person is doing jumping jacks.
+A person is extending their arms to the sides.
+A person is bouncing lightly on their feet.
+A person is clenching their fists.
+A person is spinning in circles.
+A person is sucking in their cheeks.
+A person is tapping their fingers against their thighs.
+A person is walking quickly while swinging their arms.
+A person is crouching down low and springing back up.
+A person is stretching their arms in front of them.
+A person is walking forward with small, careful steps.
+A person is walking with long strides.
+A person is stepping forward with arms extended.
 Objects fall quickly like rocks.
-People are balancing on one foot with their arms raised.
-People are leaning sideways.
-People are jogging in place.
-People are stretching their arms behind their backs.
-People are pulling their arms back in a stretch.
-People are rolling their necks.
-People are hopping in place.
-People are tilting their heads from side to side slowly.
-People are leaning back slightly.
-People are covering their mouths while yawning.
-People are touching their faces.
-People are walking in place without lifting their feet.
-People lay objects on tables on their sides.
-People are taking small steps in place.
-People are doing a deep side stretch.
-People are blinking.
-People are bending their spines backward.
-People are bringing their hands together in front of their chests.
-People move objects towards the camera.
-People are standing with their hands behind their backs, looking forward.
-People are stepping in place with their knees bent.
-People are folding their arms behind their heads.
-People are walking quickly while twisting their bodies.
-People are standing on the balls of their feet.
-People are twirling around.
-People are sitting cross-legged on the floor.
-People are walking backward with small steps.
-People are rubbing their temples.
-People hold objects next to other objects.
-People are twisting their upper bodies in quick turns.
-People are rubbing their foreheads.
-People are rubbing their chins.
-People drop objects next to other objects.
-People are rolling their shoulders forward.
-People are resting their chins on their hands.
-People are closing their eyes tightly.
-People try to pour substances but miss.
-People throw objects in the air and let them fall.
-People are clearing their throats.
-People are hopping from side to side.
-People are stretching their necks.
-People are bending at the waist.
-People drop objects onto other objects.
-People are relaxing their bodies completely.
-People twist objects.
-People are sneezing.
-People are skipping in place with small hops.
-People are bouncing their knees slightly.
-People are walking side by side.
-People are rubbing their hands together.
-People are standing with their feet spread apart.
-People are standing shoulder to shoulder.
-People are tapping their feet to a rhythm.
-People are shifting their hips from side to side.
-People are frowning.
-People are crouching low with bent knees.
-People are bouncing slightly on the balls of their feet.
-People are sweeping their arms in front of them.
-People are stretching their arms outward.
-People are shuffling their feet in place.
-People are turning in place.
-People are walking quickly.
-People are sitting cross-legged.
-People are shaking their hands as if drying them.
-People are standing with their arms behind their backs.
-People are uncrossing their arms.
-People spill substances next to objects.
-People are doing squats.
-People tip objects so contents fall out.
-People are lifting their legs in slow, deliberate motions.
-People are looking up.
-People are skipping.
-People are shivering.
-People show objects behind other objects.
-People are balancing on one foot with their arms outstretched.
-People are moving their legs outward and inward.
-People unfold objects.
-People are nodding slowly.
-People are walking on their heels.
-People are walking in a zigzag pattern.
-People fall off objects.
-People fan objects out onto surfaces.
-People feed others or things.
-People fall onto objects.
-People fidget with objects.
-People field objects quickly.
-People file objects to smooth edges.
-People fill objects with other substances.
-People find objects.
-People use their fingers accurately on objects.
-People finish tasks with other tools or objects.
-People fire objects from other objects.
-People flip objects over.
-People flip through pages or items.
-People float down surfaces.
-People let objects flow through others.
-People fluff objects with a quick motion.
-People flush objects with water or air.
-People gracefully fly off objects.
-People fold objects.
-People follow objects or paths.
-People frame objects.
-People frost objects, like baked goods.
-People gallop over surfaces.
-People garnish dishes with toppings.
-People gather objects into other objects.
-People gather objects together.
-People gear up with tools or equipment.
-People give others something.
-People glide down surfaces.
-People glide over surfaces.
-People grab objects tightly.
-People grill food items.
-People grip objects firmly.
-People guide objects along paths.
-People hand objects to others.
-People sift through objects.
-People hang from objects.
-People hang objects.
-People harvest items.
-People heat objects.
-People hide behind objects.
-People hide objects.
-People hit objects against others.
-People consistently hit objects.
-People hold onto objects.
-People hold objects.
-People hold positions.
-People ignore objects.
-People illuminate objects in the dark.
-People increase the incline of objects.
-People inflate objects.
-People inhale deeply.
-People insert objects into others.
-People inspect objects for details.
-People jump off objects.
-People jump over objects.
-People keep objects.
-People kick objects.
-People knead objects with hands or tools.
-People drink quickly.
-People land on objects.
-People lather objects with other substances.
-People laugh with others.
-People launch objects into the sky.
-People layer items between other items.
-People lead objects or others.
-People lean backward onto objects.
-People leap from objects.
-People leave objects on other objects.
-People let go of objects.
-People lick objects.
-People lie flat on surfaces.
-People lift objects above others.
-People light up objects.
-People line up objects with others.
-People listen to sounds or voices.
-People load objects onto other objects.
-People lock objects at the top.
-People look at objects.
-People search for objects.
-People loop objects around other objects.
-People lose objects.
-People lower objects onto others.
-People maintain balance on objects.
-People marinate objects in sauces.
-People measure objects.
-People mist objects with liquids.
-People mix objects.
-People moisturize objects.
-People monitor objects.
-People mop surfaces.
-People move objects to the left.
-People move objects to a rhythm.
-People move objects to the right.
-People nail objects securely.
-People navigate around objects.
-People nominate items.
-People observe objects from a distance.
-People offer tasty items.
-People open objects.
-People operate machines or controls.
-People order items from menus.
-People paddle toward objects.
-People paint objects.
-People park objects near others.
-People pass objects between surfaces.
-People pass objects from hand to hand.
-People patter objects onto surfaces.
-People pay for items.
-People pedal across surfaces.
-People perform routines on objects.
-People perform tricks on surfaces.
-People pick up objects.
-People dip objects into other objects.
-People pin objects to surfaces.
-People place objects inside others.
-People place objects on surfaces.
-People play music smoothly.
-People pluck strings softly.
-People point objects at other objects.
-People polish surfaces.
-People pop objects with other objects.
-People pour liquids into containers.
-People pour liquids onto surfaces.
-People power on objects.
-People practice on objects.
-People preheat items.
-People prepare objects or food.
-People press down on objects.
-People press objects.
-People propel objects forward.
-People protect objects.
-People prune plants or objects.
-People pull objects off others.
-People pull objects.
-People pump objects.
-People purl fabric back.
-People push objects back.
-People push off surfaces.
-People push objects away.
-People push objects up.
-People push objects down.
-People race with objects.
-People raise objects.
-People rake surfaces.
-People rally objects back and forth.
-People reach for objects.
-People read texts or items.
-People rearrange objects.
-People recycle objects.
-People reel in objects.
-People relax against objects.
-People release objects.
-People remove objects from other objects.
-People repeat processes.
-People replace objects with others.
-People respond to events or actions.
-People rest objects on the ground.
-People retract objects.
-People return objects to others.
-People rev up objects.
-People reveal hidden items.
-People reward good behavior.
-People ride on objects.
-People rinse off objects.
-People roast food items.
-People roll out dough or other objects.
-People roll objects.
-People rotate objects in circles.
-People rub objects against surfaces.
-People run on surfaces.
-People run toward objects.
-People save objects.
-People savor tastes.
-People scatter objects.
-People scoop objects into containers.
-People score surfaces.
-People scratch behind objects.
-People scrub surfaces.
-People search for hidden objects.
-People season food.
-People secure objects with tools.
-People separate objects.
-People serve food to others.
-People serve food with side dishes.
-People sew fabrics together.
-People shake objects.
-People shake heads in disapproval.
-People shape objects.
-People shift weight onto surfaces.
-People shoot objects.
-People show amazing objects.
-People shred objects.
-People shuffle items.
-People sing joyfully.
-People sip slowly.
-People sketch objects.
-People skim surfaces.
-People slam objects through others.
-People slice objects.
-People slide down surfaces.
-People slide objects off surfaces.
-People slurp from surfaces.
-People smash objects.
-People smile at others.
-People smooth surfaces.
-People smother objects.
-People snap objects.
-People sneeze into objects.
-People sniff around.
-People soak objects.
-People soar above surfaces.
+A person is balancing on one foot with their arms raised.
+A person is leaning sideways.
+A person is jogging in place.
+A person is stretching their arms behind their backs.
+A person is pulling their arms back in a stretch.
+A person is rolling their necks.
+A person is hopping in place.
+A person is tilting their heads from side to side slowly.
+A person is leaning back slightly.
+A person is covering their mouths while yawning.
+A person is touching their faces.
+A person is walking in place without lifting their feet.
+A person lay objects on tables on their sides.
+A person is taking small steps in place.
+A person is doing a deep side stretch.
+A person is blinking.
+A person is bending their spines backward.
+A person is bringing their hands together in front of their chests.
+A person move objects towards the camera.
+A person is standing with their hands behind their backs, looking forward.
+A person is stepping in place with their knees bent.
+A person is folding their arms behind their heads.
+A person is walking quickly while twisting their bodies.
+A person is standing on the balls of their feet.
+A person is twirling around.
+A person is sitting cross-legged on the floor.
+A person is walking backward with small steps.
+A person is rubbing their temples.
+A person hold objects next to other objects.
+A person is twisting their upper bodies in quick turns.
+A person is rubbing their foreheads.
+A person is rubbing their chins.
+A person drop objects next to other objects.
+A person is rolling their shoulders forward.
+A person is resting their chins on their hands.
+A person is closing their eyes tightly.
+A person try to pour substances but miss.
+A person throw objects in the air and let them fall.
+A person is clearing their throats.
+A person is hopping from side to side.
+A person is stretching their necks.
+A person is bending at the waist.
+A person drop objects onto other objects.
+A person is relaxing their bodies completely.
+A person twist objects.
+A person is sneezing.
+A person is skipping in place with small hops.
+A person is bouncing their knees slightly.
+A person is walking side by side.
+A person is rubbing their hands together.
+A person is standing with their feet spread apart.
+A person is standing shoulder to shoulder.
+A person is tapping their feet to a rhythm.
+A person is shifting their hips from side to side.
+A person is frowning.
+A person is crouching low with bent knees.
+A person is bouncing slightly on the balls of their feet.
+A person is sweeping their arms in front of them.
+A person is stretching their arms outward.
+A person is shuffling their feet in place.
+A person is turning in place.
+A person is walking quickly.
+A person is sitting cross-legged.
+A person is shaking their hands as if drying them.
+A person is standing with their arms behind their backs.
+A person is uncrossing their arms.
+A person spill substances next to objects.
+A person tip objects so contents fall out.
+A person is lifting their legs in slow, deliberate motions.
+A person is looking up.
+A person is skipping.
+A person is shivering.
+A person show objects behind other objects.
+A person is balancing on one foot with their arms outstretched.
+A person is moving their legs outward and inward.
+A person unfold objects.
+A person is nodding slowly.
+A person is walking on their heels.
+A person is walking in a zigzag pattern.
+A person fall off objects.
+A person fan objects out onto surfaces.
+A person feed others or things.
+A person fall onto objects.
+A person fidget with objects.
+A person field objects quickly.
+A person file objects to smooth edges.
+A person fill objects with other substances.
+A person find objects.
+A person use their fingers accurately on objects.
+A person finish tasks with other tools or objects.
+A person fire objects from other objects.
+A person flip objects over.
+A person flip through pages or items.
+A person float down surfaces.
+A person let objects flow through others.
+A person fluff objects with a quick motion.
+A person flush objects with water or air.
+A person gracefully fly off objects.
+A person fold objects.
+A person follow objects or paths.
+A person frame objects.
+A person frost objects, like baked goods.
+A person gallop over surfaces.
+A person garnish dishes with toppings.
+A person gather objects into other objects.
+A person gather objects together.
+A person gear up with tools or equipment.
+A person give others something.
+A person glide down surfaces.
+A person glide over surfaces.
+A person grab objects tightly.
+A person grill food items.
+A person grip objects firmly.
+A person guide objects along paths.
+A person hand objects to others.
+A person sift through objects.
+A person hang from objects.
+A person hang objects.
+A person harvest items.
+A person heat objects.
+A person hide behind objects.
+A person hide objects.
+A person hit objects against others.
+A person consistently hit objects.
+A person hold onto objects.
+A person hold objects.
+A person hold positions.
+A person ignore objects.
+A person illuminate objects in the dark.
+A person increase the incline of objects.
+A person inflate objects.
+A person inhale deeply.
+A person insert objects into others.
+A person inspect objects for details.
+A person jump off objects.
+A person jump over objects.
+A person keep objects.
+A person kick objects.
+A person knead objects with hands or tools.
+A person drink quickly.
+A person land on objects.
+A person lather objects with other substances.
+A person laugh with others.
+A person launch objects into the sky.
+A person layer items between other items.
+A person lead objects or others.
+A person lean backward onto objects.
+A person leap from objects.
+A person leave objects on other objects.
+A person let go of objects.
+A person lick objects.
+A person lie flat on surfaces.
+A person lift objects above others.
+A person light up objects.
+A person line up objects with others.
+A person listen to sounds or voices.
+A person load objects onto other objects.
+A person lock objects at the top.
+A person look at objects.
+A person search for objects.
+A person loop objects around other objects.
+A person lose objects.
+A person lower objects onto others.
+A person maintain balance on objects.
+A person marinate objects in sauces.
+A person measure objects.
+A person mist objects with liquids.
+A person mix objects.
+A person moisturize objects.
+A person monitor objects.
+A person mop surfaces.
+A person move objects to the left.
+A person move objects to a rhythm.
+A person move objects to the right.
+A person nail objects securely.
+A person navigate around objects.
+A person nominate items.
+A person observe objects from a distance.
+A person offer tasty items.
+A person open objects.
+A person operate machines or controls.
+A person order items from menus.
+A person paddle toward objects.
+A person paint objects.
+A person park objects near others.
+A person pass objects between surfaces.
+A person pass objects from hand to hand.
+A person patter objects onto surfaces.
+A person pay for items.
+A person pedal across surfaces.
+A person perform routines on objects.
+A person perform tricks on surfaces.
+A person pick up objects.
+A person dip objects into other objects.
+A person pin objects to surfaces.
+A person place objects inside others.
+A person place objects on surfaces.
+A person play music smoothly.
+A person pluck strings softly.
+A person point objects at other objects.
+A person polish surfaces.
+A person pop objects with other objects.
+A person pour liquids into containers.
+A person pour liquids onto surfaces.
+A person power on objects.
+A person practice on objects.
+A person preheat items.
+A person prepare objects or food.
+A person press down on objects.
+A person press objects.
+A person propel objects forward.
+A person protect objects.
+A person prune plants or objects.
+A person pull objects off others.
+A person pull objects.
+A person pump objects.
+A person purl fabric back.
+A person push objects back.
+A person push off surfaces.
+A person push objects away.
+A person push objects up.
+A person push objects down.
+A person race with objects.
+A person raise objects.
+A person rake surfaces.
+A person rally objects back and forth.
+A person reach for objects.
+A person read texts or items.
+A person rearrange objects.
+A person recycle objects.
+A person reel in objects.
+A person relax against objects.
+A person release objects.
+A person remove objects from other objects.
+A person repeat processes.
+A person replace objects with others.
+A person respond to events or actions.
+A person rest objects on the ground.
+A person retract objects.
+A person return objects to others.
+A person rev up objects.
+A person reveal hidden items.
+A person reward good behavior.
+A person ride on objects.
+A person rinse off objects.
+A person roast food items.
+A person roll out dough or other objects.
+A person roll objects.
+A person rotate objects in circles.
+A person rub objects against surfaces.
+A person run on surfaces.
+A person run toward objects.
+A person save objects.
+A person savor tastes.
+A person scatter objects.
+A person scoop objects into containers.
+A person score surfaces.
+A person scratch behind objects.
+A person scrub surfaces.
+A person search for hidden objects.
+A person season food.
+A person secure objects with tools.
+A person separate objects.
+A person serve food to others.
+A person serve food with side dishes.
+A person sew fabrics together.
+A person shake objects.
+A person shake heads in disapproval.
+A person shape objects.
+A person shift weight onto surfaces.
+A person shoot objects.
+A person show amazing objects.
+A person shred objects.
+A person shuffle items.
+A person sing joyfully.
+A person sip slowly.
+A person sketch objects.
+A person skim surfaces.
+A person slam objects through others.
+A person slice objects.
+A person slide down surfaces.
+A person slide objects off surfaces.
+A person slurp from surfaces.
+A person smash objects.
+A person smile at others.
+A person smooth surfaces.
+A person smother objects.
+A person snap objects.
+A person sneeze into objects.
+A person sniff around.
+A person soak objects.
+A person soar above surfaces.
 Objects turn into other objects.
 Objects are placed on surfaces.
 Objects zip through the air.
-People speed across surfaces.
-People speed down surfaces.
-People spike objects down.
-People spin around objects.
-People spin objects.
-People spit out objects.
-People splash into surfaces.
-People split objects.
-People spray objects.
-People spread objects.
-People sprinkle objects.
-People sprint toward objects.
-People squeeze objects.
-People stack objects.
-People stare at objects.
-People steal objects.
-People steep items in liquids.
-People steer objects.
-People step toward objects.
-People stick objects out.
-People stir objects.
-People store objects.
-People strengthen objects with tools.
-People stretch toward objects.
-People stretch objects out.
-People strike objects accurately.
-People stroke objects.
-People strum strings.
-People surprise others.
-People sweep surfaces.
-People swim through water.
-People swing over surfaces.
-People swing objects.
-People leap off surfaces.
-People take off from surfaces.
-People take objects for walks.
-People tap on surfaces.
-People taste food.
-People tear objects open.
-People tease others.
-People test objects.
-People thread needles or string.
-People throw objects.
-People tickle objects.
-People tie objects.
-People tighten objects.
-People toast.
-People toss objects.
-People touch objects softly.
-People trade items.
-People train with objects.
-People trim around objects.
-People trip over objects.
-People trot beside objects.
-People tuck objects.
-People tune instruments.
-People turn left.
-People turn on objects.
-People turn right.
-People turn objects around.
-People turn pages.
-People twirl objects.
-People twist objects.
-People type on devices.
-People unfold objects.
-People unlock objects.
-People untangle objects.
-People unwrap items.
-People vacuum surfaces.
-People vault over obstacles.
-People walk across surfaces.
-People warm up.
-People wash objects.
-People water plants.
-People wave.
-People weave objects.
-People whirl around.
-People whisk objects.
-People whisper.
-People whistle.
-People wipe surfaces.
-People wrap objects.
-People write on surfaces.
+A person speed across surfaces.
+A person speed down surfaces.
+A person spike objects down.
+A person spin around objects.
+A person spin objects.
+A person spit out objects.
+A person splash into surfaces.
+A person split objects.
+A person spray objects.
+A person spread objects.
+A person sprinkle objects.
+A person sprint toward objects.
+A person squeeze objects.
+A person stack objects.
+A person stare at objects.
+A person steal objects.
+A person steep items in liquids.
+A person steer objects.
+A person step toward objects.
+A person stick objects out.
+A person stir objects.
+A person store objects.
+A person strengthen objects with tools.
+A person stretch toward objects.
+A person stretch objects out.
+A person strike objects accurately.
+A person stroke objects.
+A person strum strings.
+A person surprise others.
+A person sweep surfaces.
+A person swim through water.
+A person swing over surfaces.
+A person swing objects.
+A person leap off surfaces.
+A person take off from surfaces.
+A person take objects for walks.
+A person tap on surfaces.
+A person taste food.
+A person tear objects open.
+A person tease others.
+A person test objects.
+A person thread needles or string.
+A person throw objects.
+A person tickle objects.
+A person tie objects.
+A person tighten objects.
+A person toast.
+A person toss objects.
+A person touch objects softly.
+A person trade items.
+A person train with objects.
+A person trim around objects.
+A person trip over objects.
+A person trot beside objects.
+A person tuck objects.
+A person tune instruments.
+A person turn left.
+A person turn on objects.
+A person turn right.
+A person turn objects around.
+A person turn pages.
+A person twirl objects.
+A person twist objects.
+A person type on devices.
+A person unfold objects.
+A person unlock objects.
+A person untangle objects.
+A person unwrap items.
+A person vacuum surfaces.
+A person vault over obstacles.
+A person walk across surfaces.
+A person warm up.
+A person wash objects.
+A person water plants.
+A person wave.
+A person weave objects.
+A person whirl around.
+A person whisk objects.
+A person whisper.
+A person whistle.
+A person wipe surfaces.
+A person wrap objects.
+A person write on surfaces.

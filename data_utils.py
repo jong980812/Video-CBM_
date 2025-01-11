@@ -49,6 +49,8 @@ def get_data(dataset_name, preprocess=None,args = None):
         data, _= build_dataset(is_train=True, test_mode=False, args=args)
     elif dataset_name == "SSV2_val":
         data, _= build_dataset(is_train=False, test_mode=False, args=args)
+    elif dataset_name == "SSV2_test":
+        data, _= build_dataset(is_train=False, test_mode=True, args=args)
     elif dataset_name == "mini-SSV2_train":
         data, _= build_dataset(is_train=True, test_mode=False, args=args)
     elif dataset_name == "mini-SSV2_val":

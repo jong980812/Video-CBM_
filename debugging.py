@@ -7,7 +7,6 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 import cbm
-import torch
 from tqdm import tqdm
 
 from timm.utils import accuracy
@@ -26,7 +25,6 @@ from glm_saga.elasticnet import IndexedTensorDataset, glm_saga
 from torch.utils.data import DataLoader, TensorDataset
 import video_utils
 import torch.distributed as dist
-import torch
 import numpy as np
 from PIL import Image
 from IPython.display import display, Image as IPImage
@@ -61,18 +59,83 @@ def visualize_gif(image,label,path,index,img_ind,boring):
     display(IPImage(filename=gif_path))
 # def dual_encoder(args,save_name)
 
+# def intervene_W_g(args,load_dir,W_g):
+#     cls_file = data_utils.LABEL_FILES[args.data_set]
+#     with open(cls_file, "r") as f:
+#         classes = f.read().split("\n")
+
+#     with open(os.path.join(load_dir, 'spatial', "concepts.txt"), "r") as f:
+#         s_concepts = f.read().split("\n")
+#         s_concepts = ["S:{}".format(word) for word in s_concepts]
+
+#     with open(os.path.join(load_dir, 'temporal', "concepts.txt"), "r") as f:
+#         t_concepts = f.read().split("\n")
+#         t_concepts = ["T:{}".format(word) for word in t_concepts]
+
+#     with open(os.path.join(load_dir, 'place', "concepts.txt"), "r") as f:
+#         p_concepts = f.read().split("\n")
+#         p_concepts = ["P:{}".format(word) for word in p_concepts]
+
+#     # Combine all concepts and create a concept index map
+#     concepts = s_concepts + t_concepts + p_concepts
+#     concept_index = {concept: idx for idx, concept in enumerate(concepts)}
+
+#     ################invervention############################
+#     gt_id = 338
+#     pred_id = 227
+#     delta_w = 2.0
+#     intervene_concepts = ['T:A person mop surfaces.','T:A person sweep surfaces.']
+#     ################
+
+#     for concept in intervene_concepts:
+#         if concept in concept_index:
+#             concept_idx = concept_index[concept]
+#             print(f'GT : {concept} : {W_g[gt_id][concept_idx]} to {W_g[gt_id][concept_idx] + delta_w}')
+#             # print(f'Pred : {concept} : {W_g[pred_id][concept_idx]} to {W_g[pred_id][concept_idx] - delta_w}')
+#             W_g[gt_id, concept_idx] += delta_w
+#             # W_g[pred_id, concept_idx] -= delta_w
+#         else:
+#             print(f"Concept '{concept}' not found in the concept list.")
+    
+#     return W_g
+#     ##########################################################
+
 def debug(args,save_name):
     d_val = args.data_set + "_test"
     val_data_t = data_utils.get_data(d_val,args=args)
     val_data_t.end_point = 2
     device = torch.device(args.device)
 
-    model,_ = cbm.load_cbm_triple(save_name, device,args)
+    # if args.intervene:
+    #     s_W_c = torch.load(os.path.join(save_name,'spatial',"W_c.pt"), map_location=device)
+    #     s_proj_mean = torch.load(os.path.join(save_name,'spatial', "proj_mean.pt"), map_location=device)
+    #     s_proj_std = torch.load(os.path.join(save_name,'spatial', "proj_std.pt"), map_location=device)
+
+    #     t_W_c = torch.load(os.path.join(save_name,'temporal',"W_c.pt"), map_location=device)
+    #     t_proj_mean = torch.load(os.path.join(save_name,'temporal', "proj_mean.pt"), map_location=device)
+    #     t_proj_std = torch.load(os.path.join(save_name,'temporal', "proj_std.pt"), map_location=device)
+
+    #     p_W_c = torch.load(os.path.join(save_name,'place',"W_c.pt"), map_location=device)
+    #     p_proj_mean = torch.load(os.path.join(save_name,'place', "proj_mean.pt"), map_location=device)
+    #     p_proj_std = torch.load(os.path.join(save_name,'place', "proj_std.pt"), map_location=device)
+
+    #     W_g = torch.load(os.path.join(save_name,'spatio_temporal_place', "W_g.pt"), map_location=device)
+    #     b_g = torch.load(os.path.join(save_name,'spatio_temporal_place', "b_g.pt"), map_location=device)
+
+    #     W_g = intervene_W_g(args, save_name, W_g)
+    #     model = cbm.CBM_model_triple(args.backbone, s_W_c,t_W_c,p_W_c, W_g, b_g, [s_proj_mean,t_proj_mean,p_proj_mean], [s_proj_std,t_proj_std,p_proj_std], device, args)
+    # else:
+    if args.train_mode == 'triple':
+        model,_ = cbm.load_cbm_triple(save_name, device, args)
+    else:
+        model,_ = cbm.load_cbm_two_stream(save_name, device, args)
+            
+        
     num_object,num_action,num_scene=model.s_proj_layer.weight.shape[0],model.t_proj_layer.weight.shape[0],model.p_proj_layer.weight.shape[0]
     total_concepts = num_object + num_action + num_scene
-    k=3
+    k=5
     print("?***? Start test")
-    accuracy,concept_counts = cbm_utils.get_accuracy_and_concept_distribution_cbm(model, k, val_data_t, device,64,10)
+    accuracy,concept_counts = cbm_utils.get_accuracy_and_concept_distribution_cbm(model, k, val_data_t, device,64,10, args)
     counted_object,counted_action,counted_scene = concept_counts
     # 전체 테스트 샘플 개수 (total_samples)를 직접 넣어주세요.
     total_samples = len(val_data_t)
