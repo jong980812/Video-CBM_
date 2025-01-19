@@ -127,6 +127,8 @@ def debug(args,save_name):
     # else:
     if args.train_mode == 'triple':
         model,_ = cbm.load_cbm_triple(save_name, device, args)
+    elif args.train_mode == 'single':
+        model,_ = cbm.load_cbm(save_name, device, args)
     else:
         model,_ = cbm.load_cbm_two_stream(save_name, device, args)
             
@@ -163,9 +165,6 @@ def debug(args,save_name):
     ratio_action = normalized_usage_action / total_normalized_usage
     ratio_scene = normalized_usage_scene / total_normalized_usage
 
-    
-    
-    
     print(f"Average Usage of Object Concepts per Sample: {avg_usage_object:.3f}")
     print(f"Average Usage of Action Concepts per Sample: {avg_usage_action:.3f}")
     print(f"Average Usage of Scene Concepts per Sample: {avg_usage_scene:.3f}")

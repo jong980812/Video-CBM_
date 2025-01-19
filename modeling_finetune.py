@@ -50,7 +50,32 @@ class Mlp(nn.Module):
         x = self.fc2(x)
         x = self.drop(x)
         return x
-
+# for hard label (train layer C to Y)
+class MLP(nn.Module):
+    def __init__(self, input_dim, num_classes, expand_dim):
+        super(MLP, self).__init__()
+        self.expand_dim = expand_dim
+        if self.expand_dim:
+            self.linear = nn.Linear(input_dim, expand_dim)
+            self.activation = torch.nn.ReLU()
+            self.linear2 = nn.Linear(expand_dim, num_classes) #softmax is automatically handled by loss function
+        else:
+            self.linear = nn.Linear(input_dim, num_classes)
+            
+    @property
+    def weight(self):
+        if self.expand_dim:
+            # 가중치를 합성하여 반환하거나 필요한 방식으로 가공
+            return {"linear.weight": self.linear.weight, "linear2.weight": self.linear2.weight}
+        else:
+            return {"linear.weight": self.linear.weight}
+        
+    def forward(self, x):
+        x = self.linear(x)
+        if hasattr(self, 'expand_dim') and self.expand_dim:
+            x = self.activation(x)
+            x = self.linear2(x)
+        return x
 
 class Attention(nn.Module):
     def __init__(

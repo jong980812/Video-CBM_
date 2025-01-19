@@ -37,7 +37,8 @@ def debug(args,save_name):
     val_data_t.end_point = 2
     device = torch.device(args.device)
 
-    model,_ = cbm.load_cbm_two_stream(save_name, device, args)
+    # model,_ = cbm.load_cbm_two_stream(save_name, device, args)
+    model = cbm.load_cbm(save_name, device, args)
            
     print("?***? Start test")
     accuracy = cbm_utils.get_accuracy_cbm(model, val_data_t, device , 64, 10)

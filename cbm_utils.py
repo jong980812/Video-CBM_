@@ -115,28 +115,34 @@ def save_clip_text_features(model, text, save_name, batch_size=1000):
 def save_activations(clip_name, target_name, target_layers, d_probe, 
                      concept_set, batch_size, device, pool_mode, save_dir,args=None):
     
-    s_concept_set, t_concept_set,p_concept_set = concept_set
+    if args.train_mode != 'single':
+        s_concept_set, t_concept_set,p_concept_set = concept_set
 
-    target_save_name, clip_save_name, s_text_save_name, t_text_save_name,p_text_save_name = get_save_names(clip_name, target_name, 
-                                                                    "{}", d_probe, concept_set, 
-                                                                      pool_mode, save_dir)
-    # save_names = {"clip": clip_save_name, "text": text_save_name}
+        target_save_name, clip_save_name, s_text_save_name, t_text_save_name,p_text_save_name = get_save_names(clip_name, target_name, 
+                                                                        "{}", d_probe, concept_set, 
+                                                                        pool_mode, save_dir,args)
+    else:
+        target_save_name, clip_save_name, text_save_name = get_save_names(clip_name, target_name,
+                                                                          "{}", d_probe, concept_set, 
+                                                                          pool_mode, save_dir,args)
+    # save_names = {"clip": clip_save_name, "text": target_name} # dual encoder, backbone
     # for target_layer in target_layers:
     #     save_names[target_layer] = target_save_name.format(target_layer)
         
     # if _all_saved(save_names):
     #     return
     
-    if args.dual_encoder == "lavila":
-        dual_encoder_model, clip_preprocess = get_lavila(args,device=device) 
-    elif args.dual_encoder == "clip":
-        name = 'ViT-B/16'
-        dual_encoder_model, clip_preprocess = clip.load(name, device=device)
-    elif "internvid" in args.dual_encoder:
-        dual_encoder_model, _ = get_intervid(args,device)
-        clip_preprocess = None
-        name = 'ViT-B/16'
-        clip_model, clip_preprocess = clip.load(name, device=device)
+    if args.hard_label is None:
+        if args.dual_encoder == "lavila":
+            dual_encoder_model, clip_preprocess = get_lavila(args,device=device) 
+        elif args.dual_encoder == "clip":
+            name = 'ViT-B/16'
+            dual_encoder_model, clip_preprocess = clip.load(name, device=device)
+        elif "internvid" in args.dual_encoder:
+            dual_encoder_model, _ = get_intervid(args,device)
+            clip_preprocess = None
+            name = 'ViT-B/16'
+            clip_model, clip_preprocess = clip.load(name, device=device)
 
     #! Load backbone 
     if target_name.startswith("clip_"):
@@ -145,53 +151,75 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
         target_model, target_preprocess = data_utils.get_target_model(target_name, device,args)
     target_model.to(device)
     target_model.eval()
-    dual_encoder_model.to(device)
-    dual_encoder_model.eval()
+    if args.hard_label is None:
+        dual_encoder_model.to(device)
+        dual_encoder_model.eval()
     
     #setup data
-    #! Video Dataset은 embedded preprocess 
-    data_c = data_utils.get_data(d_probe, clip_preprocess,args)
+    #! Video Dataset은 embedded preprocess
+    if args.hard_label is None:
+        data_c = data_utils.get_data(d_probe, clip_preprocess,args)
+    else:
+        data_c = data_utils.get_data(d_probe, target_preprocess,args)
     data_c.end_point=2
-    # data_c = data_utils.get_data(d_probe, target_preprocess,args)
 
-    with open(s_concept_set, 'r') as f: 
-        s_words = (f.read()).split('\n')
-    with open(t_concept_set, 'r') as f: 
-        t_words = (f.read()).split('\n')
-    with open(p_concept_set, 'r') as f: 
-        p_words = (f.read()).split('\n')
-    
-    if args.dual_encoder =='clip':
-        s_text = clip.tokenize(["{}".format(word) for word in s_words]).to(device)
-        t_text = clip.tokenize(["{}".format(word) for word in t_words]).to(device)
-        p_text = clip.tokenize(["{}".format(word) for word in p_words]).to(device)
-        save_clip_text_features(dual_encoder_model , s_text, s_text_save_name, batch_size)
-        save_clip_text_features(dual_encoder_model , t_text, t_text_save_name, batch_size)
-        save_clip_text_features(dual_encoder_model , p_text, p_text_save_name, batch_size)
-        if not args.saved_features:
-            save_clip_image_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
-    elif args.dual_encoder =='lavila':
-        s_text = clip.tokenize(["{}".format(word) for word in s_words]).to(device)
-        t_text = clip.tokenize(["{}".format(word) for word in t_words]).to(device)
-        p_text = clip.tokenize(["{}".format(word) for word in p_words]).to(device)
-        save_clip_text_features(dual_encoder_model , s_text, s_text_save_name, batch_size)
-        save_clip_text_features(dual_encoder_model , t_text, t_text_save_name, batch_size)
-        save_clip_text_features(dual_encoder_model , p_text, p_text_save_name, batch_size)
-        if not args.saved_features:
-            save_lavila_video_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
-    elif 'internvid' in args.dual_encoder:
-        s_text = clip.tokenize(["A photo of {}.".format(word) for word in s_words]).to(device)
-        t_text = dual_encoder_model.text_encoder.tokenize(["{}".format(word.replace('something','')) for word in t_words], context_length=32).to(device)
-        p_text = clip.tokenize(["A Person at the {}.".format(word) for word in p_words]).to(device)
-        # save_internvid_text_features(dual_encoder_model , s_text, s_text_save_name, batch_size)
-        save_clip_text_features(clip_model , s_text, s_text_save_name, batch_size)
+    if args.hard_label is None:
+        if args.train_mode != 'single':
+            with open(s_concept_set, 'r') as f: 
+                s_words = (f.read()).split('\n')
+            with open(t_concept_set, 'r') as f: 
+                t_words = (f.read()).split('\n')
+            with open(p_concept_set, 'r') as f: 
+                p_words = (f.read()).split('\n')
+        else:
+            with open(concept_set, 'r') as f: 
+                words = (f.read()).split('\n')
         
-        save_internvid_text_features(dual_encoder_model , t_text, t_text_save_name, batch_size)
-        # save_internvid_text_features(dual_encoder_model , p_text, p_text_save_name, batch_size)
-        save_clip_text_features(clip_model , p_text, p_text_save_name, batch_size)
+        if args.dual_encoder =='clip':
+            if args.train_mode != 'single':
+                s_text = clip.tokenize(["{}".format(word) for word in s_words]).to(device)
+                t_text = clip.tokenize(["{}".format(word) for word in t_words]).to(device)
+                p_text = clip.tokenize(["{}".format(word) for word in p_words]).to(device)
+                save_clip_text_features(dual_encoder_model , s_text, s_text_save_name, batch_size)
+                save_clip_text_features(dual_encoder_model , t_text, t_text_save_name, batch_size)
+                save_clip_text_features(dual_encoder_model , p_text, p_text_save_name, batch_size)
+            else:
+                text = clip.tokenize(["{}".format(word) for word in words]).to(device)
+                save_clip_text_features(dual_encoder_model , text, text_save_name, batch_size)
+                
+            if not args.saved_features:
+                save_clip_image_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
+                
+        elif args.dual_encoder =='lavila':
+            if args.train_mode != 'single':
+                s_text = clip.tokenize(["{}".format(word) for word in s_words]).to(device)
+                t_text = clip.tokenize(["{}".format(word) for word in t_words]).to(device)
+                p_text = clip.tokenize(["{}".format(word) for word in p_words]).to(device)
+                save_clip_text_features(dual_encoder_model , s_text, s_text_save_name, batch_size)
+                save_clip_text_features(dual_encoder_model , t_text, t_text_save_name, batch_size)
+                save_clip_text_features(dual_encoder_model , p_text, p_text_save_name, batch_size)
+            else:
+                text = clip.tokenize(["{}".format(word) for word in words]).to(device)
+                save_clip_text_features(dual_encoder_model , text, text_save_name, batch_size)
+            if not args.saved_features:
+                save_lavila_video_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
         
-        if not args.saved_features:
-            save_internvid_video_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
+        elif 'internvid' in args.dual_encoder:
+            if args.train_mode != 'single':
+                s_text = clip.tokenize(["A photo of {}.".format(word) for word in s_words]).to(device)
+                t_text = dual_encoder_model.text_encoder.tokenize(["{}".format(word.replace('something','')) for word in t_words], context_length=32).to(device)
+                p_text = clip.tokenize(["A Person at the {}.".format(word) for word in p_words]).to(device)
+                # save_internvid_text_features(dual_encoder_model , s_text, s_text_save_name, batch_size)
+                save_clip_text_features(clip_model , s_text, s_text_save_name, batch_size)
+                save_internvid_text_features(dual_encoder_model , t_text, t_text_save_name, batch_size)
+                # save_internvid_text_features(dual_encoder_model , p_text, p_text_save_name, batch_size)
+                save_clip_text_features(clip_model , p_text, p_text_save_name, batch_size)
+            else:
+                text = dual_encoder_model.text_encoder.tokenize(["{}".format(word.replace('something','')) for word in words], context_length=32).to(device)
+                save_internvid_text_features(dual_encoder_model , text, text_save_name, batch_size)
+        
+            if not args.saved_features:
+                save_internvid_video_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
     if args.saved_features:# 이 아래는 saved_feature이면 안해도됌.
         return
     
@@ -249,22 +277,27 @@ def get_activation(outputs, mode):
     return hook
 
     
-def get_save_names(clip_name, target_name, target_layer, d_probe, concept_set, pool_mode, save_dir):
-    s_concept, t_concept,p_concept = concept_set    
+def get_save_names(clip_name, target_name, target_layer, d_probe, concept_set, pool_mode, save_dir,args):
+    if args.train_mode != 'single':
+        s_concept, t_concept,p_concept = concept_set    
     # if target_name.startswith("clip_"):
     target_save_name = "{}/{}_{}.pt".format(save_dir, d_probe, target_name.replace('/', ''))
     # else:
     #     target_save_name = "{}/{}_{}_{}{}.pt".format(save_dir, d_probe, target_name, target_layer,
     #                                              PM_SUFFIX[pool_mode])
     clip_save_name = "{}/{}_{}.pt".format(save_dir, d_probe, clip_name.replace('/', ''))
-    s_concept_set_name = (s_concept.split("/")[-1]).split(".")[0] if s_concept is not None else None
-    t_concept_set_name = (t_concept.split("/")[-1]).split(".")[0] if t_concept is not None else None
-    p_concept_set_name = (p_concept.split("/")[-1]).split(".")[0] if p_concept is not None else None
-    s_text_save_name = "{}/{}_{}.pt".format(save_dir, s_concept_set_name, clip_name.replace('/', ''))
-    t_text_save_name = "{}/{}_{}.pt".format(save_dir, t_concept_set_name, clip_name.replace('/', ''))
-    p_text_save_name = "{}/{}_{}.pt".format(save_dir, p_concept_set_name, clip_name.replace('/', ''))
-    
-    return target_save_name, clip_save_name, s_text_save_name, t_text_save_name,p_text_save_name
+    if args.train_mode != 'single':
+        s_concept_set_name = (s_concept.split("/")[-1]).split(".")[0] if s_concept is not None else None
+        t_concept_set_name = (t_concept.split("/")[-1]).split(".")[0] if t_concept is not None else None
+        p_concept_set_name = (p_concept.split("/")[-1]).split(".")[0] if p_concept is not None else None
+        s_text_save_name = "{}/{}_{}.pt".format(save_dir, s_concept_set_name, clip_name.replace('/', ''))
+        t_text_save_name = "{}/{}_{}.pt".format(save_dir, t_concept_set_name, clip_name.replace('/', ''))
+        p_text_save_name = "{}/{}_{}.pt".format(save_dir, p_concept_set_name, clip_name.replace('/', ''))
+        return target_save_name, clip_save_name, s_text_save_name, t_text_save_name,p_text_save_name
+    else:
+        concept_set_name = (concept_set.split("/")[-1]).split(".")[0] if concept_set is not None else None
+        text_save_name = "{}/{}_{}.pt".format(save_dir, concept_set_name, clip_name.replace('/', ''))
+        return target_save_name, clip_save_name, text_save_name   
 
     
 def _all_saved(save_names):
@@ -374,20 +407,20 @@ def get_accuracy_and_concept_distribution_cbm(model,k,dataset, device, batch_siz
                         topk_indices_str = ",".join(map(str, topk_indices[i].cpu().tolist()))
                         f.write(f"{labels[i].item()},{topk_indices_str}\n")
     
-    if clustering is True:
-        for j in range(images.shape[0]):
-            current_label = labels[j]
-            class_concept[current_label] = concept_contribution[j]
-        clusters, optimal_cluster = cluster_classes(class_concept, max_k=100)
-        cluster_output = os.path.join(args.debug, f'clusters_{optimal_cluster}.txt')
-        output_file = os.path.join()
-        with open(output_file, 'w') as f:
-            for i in range(optimal_cluster):
-                # 클러스터 i에 속한 샘플들의 인덱스를 찾습니다
-                samples_in_cluster = [index for index, label in enumerate(clusters) if label == i]
-                f.write(f"Cluster {i}:\n")
-                f.write(", ".join(map(str, samples_in_cluster)) + "\n\n")
-        return
+    # if clustering is True:
+    #     for j in range(images.shape[0]):
+    #         current_label = labels[j]
+    #         class_concept[current_label] = concept_contribution[j]
+    #     clusters, optimal_cluster = cluster_classes(class_concept, max_k=100)
+    #     cluster_output = os.path.join(args.debug, f'clusters_{optimal_cluster}.txt')
+    #     output_file = os.path.join()
+    #     with open(output_file, 'w') as f:
+    #         for i in range(optimal_cluster):
+    #             # 클러스터 i에 속한 샘플들의 인덱스를 찾습니다
+    #             samples_in_cluster = [index for index, label in enumerate(clusters) if label == i]
+    #             f.write(f"Cluster {i}:\n")
+    #             f.write(", ".join(map(str, samples_in_cluster)) + "\n\n")
+    #     return
     
     if args.save_contibution:                    
         contribution_analysis.contribution_analysis(args)
@@ -451,9 +484,6 @@ def save_vmae_video_features(model, dataset, save_name, batch_size=1000 , device
     del all_features
     torch.cuda.empty_cache()
     return
-
-
-
 
 
 def get_lavila(args,device):

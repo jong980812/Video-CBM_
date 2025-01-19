@@ -28,6 +28,8 @@ LABEL_FILES = {"places365":"data/categories_places365_clean.txt",
                "kinetics400":"data/kinetics400_classes.txt",
                "kinetics400_scratch":"data/kinetics400_classes.txt",
                "kinetics100":"data/kinetics100_classes.txt",
+               "TOY":"data/toy_classes.txt",
+               "kth":"data/kth_classes.txt",
                }
 
 def get_resnet_imagenet_preprocess():
@@ -73,6 +75,19 @@ def get_data(dataset_name, preprocess=None,args = None):
         data, _= build_dataset(is_train=False, test_mode=False, args=args)
     elif dataset_name == "kinetics100_test":
         data, _= build_dataset(is_train=False, test_mode=True, args=args)
+    elif dataset_name == "TOY_train":
+        data, _= build_dataset(is_train=True, test_mode=False, args=args)
+    elif dataset_name == "TOY_val":
+        data, _= build_dataset(is_train=False, test_mode=False, args=args)
+    elif dataset_name == "TOY_test":
+        data, _= build_dataset(is_train=False, test_mode=True, args=args)
+    elif dataset_name == "kth_train":
+        data, _= build_dataset(is_train=True, test_mode=False, args=args)
+    elif dataset_name == "kth_val":
+        data, _= build_dataset(is_train=False, test_mode=False, args=args)
+    elif dataset_name == "kth_test":
+        data, _= build_dataset(is_train=False, test_mode=True, args=args)
+    
     elif dataset_name == "cifar100_train":
         data = datasets.CIFAR100(root=os.path.expanduser("~/.cache"), download=True, train=True,
                                    transform=preprocess)

@@ -145,7 +145,7 @@ class SSVideoClsDataset(Dataset):
                     buffer = self.loadvideo_decord(sample)
             buffer = self.data_transform(buffer)
             if self.center_frame:
-                buffer = buffer[:,self.clip_len//2,:,:]
+                # buffer = buffer[:,self.clip_len//2,:,:]
                 return buffer,self.label_array[index],sample
             return buffer, self.label_array[index]#, sample.split("/")[-1].split(".")[0]
         
@@ -224,7 +224,8 @@ class SSVideoClsDataset(Dataset):
             min_scale=256,
             max_scale=320,
             crop_size=self.crop_size,
-            random_horizontal_flip=False if args.data_set == 'SSV2' else True,
+            # random_horizontal_flip=False if args.data_set == 'SSV2' else True,
+            random_horizontal_flip=False if (args.data_set == 'SSV2' or args.data_set == 'TOY' or args.data_set == 'kth') else True,
             inverse_uniform_sampling=False,
             aspect_ratio=asp,
             scale=scl,

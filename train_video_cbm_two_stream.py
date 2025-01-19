@@ -138,7 +138,7 @@ parser.add_argument('--imagenet_default_mean_and_std', default=True, action='sto
 parser.add_argument('--num_segments', type=int, default= 1)
 parser.add_argument('--num_frames', type=int, default=16)
 parser.add_argument('--sampling_rate', type=int, default= 4)
-parser.add_argument('--data_set', default='Kinetics-400', choices=['kinetics100','kinetics400','kinetics400_scratch', 'mini-SSV2','SSV2', 'UCF101', 'HMDB51','image_folder'],
+parser.add_argument('--data_set', default='Kinetics-400', choices=['kinetics100','kinetics400','kinetics400_scratch', 'mini-SSV2','SSV2', 'UCF101', 'HMDB51','TOY','image_folder'],
                     type=str, help='dataset')
 parser.add_argument('--output_dir', default='',
                     help='path where to save, empty for no saving')
@@ -214,9 +214,10 @@ parser.add_argument('--dual_encoder', default='clip', choices=['clip', 'lavila',
                     type=str, help='dataset')
 parser.add_argument('--dual_encoder_frames',type=int,default=16)
 parser.add_argument('--lavila_ckpt',type=str,default=None)
+
 parser.add_argument('--train_mode',type=str,default='para')
 parser.add_argument('--internvid_version',type=str,default='200m')
-parser.add_argument('--only_s',action='store_true')
+parser.add_argument('--only_s',action='store_true', help="if train mode is 'para', train spatial only")
 parser.add_argument('--multiview',action='store_true')
 parser.add_argument('--sp_clip',action='store_true')
 parser.add_argument('--debug',default=None, help="model path")
@@ -279,9 +280,9 @@ def train_cbm_and_save(args):
                                args=args)
         
     target_save_name, clip_save_name, s_text_save_name, t_text_save_name,p_text_save_name = cbm_utils.get_save_names(args.dual_encoder, args.backbone, 
-                                            args.feature_layer,d_train, (args.s_concept_set, args.t_concept_set, args.p_concept_set), "avg", args.activation_dir)
+                                            args.feature_layer,d_train, (args.s_concept_set, args.t_concept_set, args.p_concept_set), "avg", args.activation_dir,args)
     val_target_save_name, val_clip_save_name, s_text_save_name, t_text_save_name,_ =  cbm_utils.get_save_names(args.dual_encoder, args.backbone,
-                                            args.feature_layer, d_val, (args.s_concept_set, args.t_concept_set,args.p_concept_set), "avg", args.activation_dir)
+                                            args.feature_layer, d_val, (args.s_concept_set, args.t_concept_set,args.p_concept_set), "avg", args.activation_dir,args)
     
     feature_storage = '/data/datasets/videocbm/features'
     if args.saved_features:
@@ -371,26 +372,24 @@ def train_cbm_and_save(args):
         for i, concept in enumerate(s_concepts):
             if s_highest[i]<=args.clip_cutoff:
                 print("!**Spatial** Deleting {}, CLIP top5:{:.3f}".format(concept, s_highest[i]))
-
     original_n_concept = len(s_concepts)
-    s_concepts = [s_concepts[i] for i in range(len(s_concepts)) if s_highest[i]>args.clip_cutoff]
+    s_concepts = [s_concepts[i] for i in range(len(s_concepts)) if s_highest[i]>args.clip_cutoff and s_concepts[i] != '']
     print(f"!**Spatial** Num concept {len(s_concepts)} from {original_n_concept}")
+    
     if args.print:
         for i, concept in enumerate(t_concepts):
             if t_highest[i]<=args.clip_cutoff:
                 print("?**Temporal** Deleting {}, CLIP top5:{:.3f}".format(concept, t_highest[i]))
-
     original_n_concept = len(t_concepts)
-    t_concepts = [t_concepts[i] for i in range(len(t_concepts)) if t_highest[i]>args.clip_cutoff]
+    t_concepts = [t_concepts[i] for i in range(len(t_concepts)) if t_highest[i]>args.clip_cutoff and t_concepts[i] != '']
     print(f"?**Temporal** Num concept {len(t_concepts)} from {original_n_concept}")
     
     if args.print:
         for i, concept in enumerate(p_concepts):
             if p_highest[i]<=args.clip_cutoff:
                 print("!**Place** Deleting {}, CLIP top5:{:.3f}".format(concept, p_highest[i]))
-
     original_n_concept = len(p_concepts)
-    p_concepts = [p_concepts[i] for i in range(len(p_concepts)) if p_highest[i]>args.clip_cutoff]
+    p_concepts = [p_concepts[i] for i in range(len(p_concepts)) if p_highest[i]>args.clip_cutoff and p_concepts[i] != '']
     print(f"!**Place** Num concept {len(p_concepts)} from {original_n_concept}")
     
     #save memory by recalculating
@@ -402,29 +401,35 @@ def train_cbm_and_save(args):
             sp_image_features = torch.load(sp_clip_save_name, map_location="cpu").float()
             sp_image_features /= torch.norm(sp_image_features, dim=2, keepdim=True)
 
-            s_text_features = torch.load(s_text_save_name, map_location="cpu").float()[s_highest>args.clip_cutoff]
+            # s_text_features = torch.load(s_text_save_name, map_location="cpu").float()[s_highest>args.clip_cutoff]
+            s_text_features = torch.load(s_text_save_name, map_location="cpu").float()[(s_highest > args.clip_cutoff) & (s_concepts != '')]
             s_text_features /= torch.norm(s_text_features, dim=1, keepdim=True)
             
-            t_text_features = torch.load(t_text_save_name, map_location="cpu").float()[t_highest>args.clip_cutoff]
+            # t_text_features = torch.load(t_text_save_name, map_location="cpu").float()[t_highest>args.clip_cutoff]
+            t_text_features = torch.load(t_text_save_name, map_location="cpu").float()[(t_highest > args.clip_cutoff) & (t_concepts != '')]
             t_text_features /= torch.norm(t_text_features, dim=1, keepdim=True)
             
-            p_text_features = torch.load(p_text_save_name, map_location="cpu").float()[p_highest>args.clip_cutoff]
+            # p_text_features = torch.load(p_text_save_name, map_location="cpu").float()[p_highest>args.clip_cutoff]
+            p_text_features = torch.load(p_text_save_name, map_location="cpu").float()[(p_highest > args.clip_cutoff) & (p_concepts != '')]
             p_text_features /= torch.norm(p_text_features, dim=1, keepdim=True)
             
-            s_clip_features = (sp_image_features @ s_text_features.T).mean(1)
+            s_clip_features = (sp_image_features @ s_text_features.T).mean(1) # clip으로 video feature 뽑은 경우
             t_clip_features = image_features @ t_text_features.T
             p_clip_features = (sp_image_features @ p_text_features.T).mean(1)
         else:
             image_features = torch.load(clip_save_name, map_location="cpu").float()
             image_features /= torch.norm(image_features, dim=1, keepdim=True)
 
-            s_text_features = torch.load(s_text_save_name, map_location="cpu").float()[s_highest>args.clip_cutoff]
+            # s_text_features = torch.load(s_text_save_name, map_location="cpu").float()[s_highest>args.clip_cutoff]
+            s_text_features = torch.load(s_text_save_name, map_location="cpu").float()[(s_highest > args.clip_cutoff) & (s_concepts != '')]
             s_text_features /= torch.norm(s_text_features, dim=1, keepdim=True)
             
-            t_text_features = torch.load(t_text_save_name, map_location="cpu").float()[t_highest>args.clip_cutoff]
+            # t_text_features = torch.load(t_text_save_name, map_location="cpu").float()[t_highest>args.clip_cutoff]
+            t_text_features = torch.load(t_text_save_name, map_location="cpu").float()[(t_highest > args.clip_cutoff) & (t_concepts != '')]
             t_text_features /= torch.norm(t_text_features, dim=1, keepdim=True)
             
-            p_text_features = torch.load(p_text_save_name, map_location="cpu").float()[p_highest>args.clip_cutoff]
+            # p_text_features = torch.load(p_text_save_name, map_location="cpu").float()[p_highest>args.clip_cutoff]
+            p_text_features = torch.load(p_text_save_name, map_location="cpu").float()[(p_highest > args.clip_cutoff) & (p_concepts != '')]
             p_text_features /= torch.norm(p_text_features, dim=1, keepdim=True)
             
             s_clip_features = image_features @ s_text_features.T
@@ -432,9 +437,12 @@ def train_cbm_and_save(args):
             p_clip_features = image_features @ p_text_features.T
         del image_features, s_text_features,t_text_features,p_text_features
     
-    s_val_clip_features = s_val_clip_features[:, s_highest>args.clip_cutoff]
-    t_val_clip_features = t_val_clip_features[:, t_highest>args.clip_cutoff]
-    p_val_clip_features = p_val_clip_features[:, p_highest>args.clip_cutoff]
+    # s_val_clip_features = s_val_clip_features[:, s_highest>args.clip_cutoff]
+    # t_val_clip_features = t_val_clip_features[:, t_highest>args.clip_cutoff]
+    # p_val_clip_features = p_val_clip_features[:, p_highest>args.clip_cutoff]
+    s_val_clip_features = s_val_clip_features[:, (s_highest > args.clip_cutoff) & (s_concepts != '')]
+    t_val_clip_features = t_val_clip_features[:, (t_highest > args.clip_cutoff) & (t_concepts != '')]
+    p_val_clip_features = p_val_clip_features[:, (p_highest > args.clip_cutoff) & (p_concepts != '')]
     #! Learning Concept Layer
     #learn projection layer
     save_name = "{}/{}_cbm_{}".format(args.save_dir, args.data_set, datetime.datetime.now().strftime("%Y_%m_%d_%H_%M"))

@@ -1,0 +1,9 @@
+It moves left to right.
+It moves right to left.
+It moves up.
+It moves down.
+It rotates clockwise.
+It rotates counterclockwise.
+It falls.
+It turns left.
+It turns right.

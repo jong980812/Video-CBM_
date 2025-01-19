@@ -4,7 +4,9 @@ import torch
 import data_utils
 from sparselinear import SparseLinear
 import torch.nn as nn
-from learning_concept_layer import Sparse_attention
+from modeling_finetune import MLP
+
+# from learning_concept_layer import Sparse_attention
 class CBM_model(torch.nn.Module):
     def __init__(self, backbone_name, W_c, W_g, b_g, proj_mean, proj_std, device="cuda",args=None):
         super().__init__()
@@ -19,9 +21,14 @@ class CBM_model(torch.nn.Module):
             self.backbone = lambda x: model.forward_features(x)
         else:
             self.backbone = torch.nn.Sequential(*list(model.children())[:-1])
-            
-        self.proj_layer = torch.nn.Linear(in_features=W_c.shape[1], out_features=W_c.shape[0], bias=False).to(device)
-        self.proj_layer.load_state_dict({"weight":W_c})
+        
+        if args.use_mlp:
+            self.proj_layer = ModelOracleCtoY(n_class_attr=2, input_dim=W_c['linear.weight'].shape[1], num_classes=W_c['linear2.weight'].shape[0])
+            self.proj_layer.load_state_dict(W_c)
+            self.proj_layer = self.proj_layer.cuda()
+        else:
+            self.proj_layer = torch.nn.Linear(in_features=W_c.shape[1], out_features=W_c.shape[0], bias=False).to(device)
+            self.proj_layer.load_state_dict({"weight":W_c})
             
         self.proj_mean = proj_mean
         self.proj_std = proj_std
@@ -371,3 +378,91 @@ def load_std(load_dir, device):
     model.eval()
     return model
 
+def ModelOracleCtoY(n_class_attr, input_dim, num_classes):
+    # X -> C part is separate, this is only the C -> Y part
+    import math
+    expand_dim = int(math.sqrt(input_dim * num_classes))
+    if n_class_attr == 3:
+        model = MLP(input_dim=input_dim * n_class_attr, num_classes=num_classes, expand_dim=expand_dim)
+    else:
+        model = MLP(input_dim=input_dim, num_classes=num_classes, expand_dim=expand_dim)
+    return model
+
+class QuickGELU(nn.Module):
+    def forward(self, x: torch.Tensor):
+        return x * torch.sigmoid(1.702 * x)
+class ResidualAttentionBlock(nn.Module):
+    def __init__(self, d_model: int=1, n_head: int=1, attn_mask: torch.Tensor = None):
+        super().__init__()
+
+        self.attn = nn.MultiheadAttention(d_model, n_head)
+        # self.ln_1 = LayerNorm(d_model)
+        # self.mlp = nn.Sequential(OrderedDict([
+        #     ("c_fc", nn.Linear(d_model, d_model * 4)),
+        #     ("gelu", QuickGELU()),
+        #     ("c_proj", nn.Linear(d_model * 4, d_model))
+        # ]))
+        # self.ln_2 = LayerNorm(d_model)
+        self.attn_mask = attn_mask
+
+    def attention(self, x: torch.Tensor, x2:torch.Tensor):
+        self.attn_mask = self.attn_mask.to(dtype=x.dtype, device=x.device) if self.attn_mask is not None else None
+
+        return self.attn(x, x2, x2, need_weights=False, attn_mask=self.attn_mask)[0]
+
+    def forward(self, x: torch.Tensor,x2:torch.Tensor):
+        x = self.attention(x,x2)+x
+        # x = x + self.mlp((x))
+        return x
+    
+class Sparse_attention(nn.Module):
+    def __init__(self, d_model: int=1, n_head: int=1, attn_mask: torch.Tensor = None, linear_in=1, linear_out=1):
+        super().__init__()
+        
+        self.attention = ResidualAttentionBlock(d_model,n_head,attn_mask)
+        self.spatial_token = nn.Parameter(torch.randn(1,linear_in))
+        self.sparse_linear = SparseLinear(linear_in,linear_out,bias=True,sparsity=0.9,alpha=0.1)
+        
+    def forward(self,x):
+        # x1 = x1.unsqueeze(-1)
+        # x2 = x2.unsqueeze(-1)
+        # spatial_token = self.spatial_token.expand(1,x1.shape[0],-1)
+        x = x.permute(1, 0, 2)  # NLD -> LND
+        # x2 = x2.permute(1, 0, 2)  # NLD -> LND
+        
+        x= self.attention(x,x)
+        x = x.permute(1, 0, 2)  #NLD
+        # final_feat=x.mean(1)
+        x = self.sparse_linear(x)
+        x = x.mean(1)
+        return x,None#final_feat
+    def forward_feat(self,x):
+    
+        spatial_token = self.spatial_token.expand(1,x.shape[0],-1)
+        x1 = x.permute(1, 0, 2)  # NLD -> LND
+        # x2 = x2.permute(1, 0, 2)  # NLD -> LND
+
+        sub_act= self.attention(spatial_token,x1).permute(1,0,2).squeeze(1)#N,1,D
+        mean_act = x[:,2,:]#.mean(1)  #NLD
+        # final_feat=x.squeeze(1)
+        x = self.sparse_linear(mean_act)
+        # sub_x = self.sparse_linear(sub_act)
+        final = x#+sub_x*0.1
+        return final,sub_act
+    def forward_feat_ensemble(self,x):
+    
+        spatial_token = self.spatial_token.expand(1,x.shape[0],-1)
+        x1 = x.permute(1, 0, 2)  # NLD -> LND
+        # x2 = x2.permute(1, 0, 2)  # NLD -> LND
+
+        sub_act= self.attention(spatial_token,x1).permute(1,0,2).squeeze(1)#N,1,D
+        # mean_act = x.mean(1)  #NLD
+        # final_feat=x.squeeze(1)
+        x = self.sparse_linear(x)
+        sub_x = self.sparse_linear(sub_act)
+        final = x.mean(1)+(0.1*sub_x)
+        return final,sub_act
+    # def forward_feat_self(self,x1):
+    
+    #     x=x1[]
+    #     return x,final_feat

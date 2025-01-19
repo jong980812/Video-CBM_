@@ -1,6 +1,5 @@
 import os
 import numpy as np
-from numpy.lib.function_base import disp
 import torch
 import decord
 from PIL import Image
@@ -227,7 +226,7 @@ class VideoClsDataset(Dataset):
             min_scale=256,
             max_scale=320,
             crop_size=self.crop_size,
-            random_horizontal_flip=False if args.data_set == 'SSV2' else True ,
+            random_horizontal_flip=False if args.data_set == 'SSV2' or args.data_set == 'TOY' or args.data_set == 'kth' else True ,
             inverse_uniform_sampling=False,
             aspect_ratio=asp,
             scale=scl,
