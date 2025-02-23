@@ -291,3 +291,27 @@ def CLIP_OPENAI_TIMESFORMER_LARGE(
     return model
 
 
+class Timesformer(nn.Module):
+    def __init__(self,img_size=224, patch_size=14,
+        embed_dim=768, depth=12, num_heads=16,
+        num_frames=8,
+        time_init='zeros',
+        attention_style='frozen-in-time',
+        ln_pre=False,
+        act_layer=QuickGELU,
+        is_tanh_gating=False,
+        drop_path_rate=0.):
+        super().__init__()
+        self.model = SpaceTimeTransformer(
+                            img_size=224, patch_size=14,
+                            embed_dim=768, depth=12, num_heads=16,
+                            num_frames=8,
+                            time_init='zeros',
+                            attention_style='frozen-in-time',
+                            ln_pre=False,
+                            act_layer=QuickGELU,
+                            is_tanh_gating=False,
+                            drop_path_rate=0.,)
+    def forward(self,x):
+        x = self.model(x)
+        return x

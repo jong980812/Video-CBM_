@@ -71,7 +71,7 @@ def rgetattr(obj, attr, *args):
 
 
 # util functions to convert CLIP-style model keys to TimeSformer-style
-def remap_keys(clip_state_dict, transformer_layers=12):
+def  remap_keys(clip_state_dict, transformer_layers=12):
     remapped_state_dict = OrderedDict()
     key_mapping = {
         "class_embedding": "cls_token",
@@ -104,5 +104,34 @@ def remap_keys(clip_state_dict, transformer_layers=12):
         if key == "positional_embedding":
             clip_state_dict[key] = clip_state_dict[key].unsqueeze(0)
         remapped_state_dict[key_mapping[key]] = clip_state_dict[key]
+
+    return remapped_state_dict
+def AIM_remap_keys(clip_state_dict, transformer_layers=12):
+    remapped_state_dict = OrderedDict()
+    key_mapping = {
+    }
+    for layer in range(transformer_layers):
+        # key_mapping[f"transformer.resblocks.{layer}.attn.in_proj_weight"] = f"blocks.{layer}.attn.qkv.weight"
+        # key_mapping[f"transformer.resblocks.{layer}.attn.in_proj_bias"] = f"blocks.{layer}.attn.qkv.bias"
+        # key_mapping[f"transformer.resblocks.{layer}.attn.out_proj.weight"] = f"blocks.{layer}.attn.proj.weight"
+        # key_mapping[f"transformer.resblocks.{layer}.attn.out_proj.bias"] = f"blocks.{layer}.attn.proj.bias"
+        # key_mapping[f"transformer.resblocks.{layer}.ln_1.weight"] = f"blocks.{layer}.norm1.weight"
+        # key_mapping[f"transformer.resblocks.{layer}.ln_1.bias"] = f"blocks.{layer}.norm1.bias"
+        # key_mapping[f"transformer.resblocks.{layer}.mlp.c_fc.weight"] = f"blocks.{layer}.mlp.fc1.weight"
+        # key_mapping[f"transformer.resblocks.{layer}.mlp.c_fc.bias"] = f"blocks.{layer}.mlp.fc1.bias"
+        # key_mapping[f"transformer.resblocks.{layer}.mlp.c_proj.weight"] = f"blocks.{layer}.mlp.fc2.weight"
+        # key_mapping[f"transformer.resblocks.{layer}.mlp.c_proj.bias"] = f"blocks.{layer}.mlp.fc2.bias"
+        # key_mapping[f"transformer.resblocks.{layer}.ln_2.weight"] = f"blocks.{layer}.norm2.weight"
+        # key_mapping[f"transformer.resblocks.{layer}.ln_2.bias"] = f"blocks.{layer}.norm2.bias"
+        
+        key_mapping[f"transformer.resblocks.{layer}.attn.in_proj_weight"] = f"transformer.resblocks.{layer}.attn.qkv.weight"
+        key_mapping[f"transformer.resblocks.{layer}.attn.in_proj_bias"] = f"transformer.resblocks.{layer}.attn.qkv.bias"
+        key_mapping[f"transformer.resblocks.{layer}.attn.out_proj.weight"] = f"transformer.resblocks.{layer}.attn.proj.weight"
+        key_mapping[f"transformer.resblocks.{layer}.attn.out_proj.bias"] = f"transformer.resblocks.{layer}.attn.proj.bias"
+    for key in clip_state_dict:
+        if key in list(key_mapping.keys()):
+            remapped_state_dict[key_mapping[key]] = clip_state_dict[key]
+        else:
+            remapped_state_dict[key]=clip_state_dict[key]
 
     return remapped_state_dict

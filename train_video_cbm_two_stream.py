@@ -13,7 +13,7 @@ from glm_saga.elasticnet import IndexedTensorDataset, glm_saga
 from torch.utils.data import DataLoader, TensorDataset
 import video_utils
 import torch.distributed as dist
-from learning_concept_layer import spatio_temporal_parallel,spatio_temporal_serial, spatio_temporal_attention,spatio_temporal_joint,spatio_temporal_three_joint
+from learning_concept_layer import spatio_temporal_parallel,spatio_temporal_serial, spatio_temporal_attention,spatio_temporal_joint,spatio_temporal_three_joint,hard_label
 import debugging
 parser = argparse.ArgumentParser(description='Settings for creating CBM')
 # parser.add_argument('--batch_size', default=64, type=int)
@@ -136,7 +136,7 @@ parser.add_argument('--imagenet_default_mean_and_std', default=True, action='sto
 parser.add_argument('--num_segments', type=int, default= 1)
 parser.add_argument('--num_frames', type=int, default= 16)
 parser.add_argument('--sampling_rate', type=int, default= 4)
-parser.add_argument('--data_set', default='Kinetics-400', choices=['kinetics100','kinetics400','kinetics400_scratch', 'mini-SSV2','SSV2', 'UCF101', 'HMDB51','image_folder'],
+parser.add_argument('--data_set', default='Kinetics-400', choices=['kth','haa500_subset','kinetics100','kinetics400','kinetics400_scratch', 'mini-SSV2','SSV2', 'UCF101', 'HMDB51','image_folder'],
                     type=str, help='dataset')
 parser.add_argument('--output_dir', default='',
                     help='path where to save, empty for no saving')
@@ -204,7 +204,7 @@ parser.add_argument("--n_iters", type=int, default=1000, help="How many iteratio
 parser.add_argument("--print", action='store_true', help="Print all concepts being deleted in this stage")
 parser.add_argument('--data_path', default='data/video_annotation/ucf101', type=str,
                     help='dataset path')
-parser.add_argument('--video-anno-path',type=str)
+parser.add_argument('--video_anno_path',type=str)
 parser.add_argument('--center_frame',action='store_true')
 parser.add_argument('--no_aug',type=bool,default=False)
 parser.add_argument('--saved_features',action='store_true')
@@ -216,7 +216,9 @@ parser.add_argument('--train_mode',type=str,default='para')
 parser.add_argument('--internvid_version',type=str,default='200m')
 parser.add_argument('--only_s',action='store_true')
 parser.add_argument('--multiview',action='store_true')
+parser.add_argument('--hard_label',type=str,default=None)
 parser.add_argument('--sp_clip',action='store_true')
+parser.add_argument('--use_mlp',action='store_true')
 parser.add_argument('--debug',default=None)
 
 
@@ -251,13 +253,13 @@ def train_cbm_and_save(args):
     
     with open(args.s_concept_set) as f:
         s_concepts = f.read().split("\n")
-        s_concepts = list(set(s_concepts))
+        # s_concepts = list(set(s_concepts))
     with open(args.t_concept_set) as f:
         t_concepts = f.read().split("\n")
-        t_concepts = list(set(t_concepts))
+        # t_concepts = list(set(t_concepts))
     with open(args.p_concept_set) as f:
         p_concepts = f.read().split("\n")
-        p_concepts = list(set(p_concepts))
+        # p_concepts = list(set(p_concepts))
     if args.debug is not None:
         debugging.debug(args,args.debug)
         return
@@ -489,7 +491,7 @@ def train_cbm_and_save(args):
                             p_val_clip_features,
                             save_name
         )
-    else:
+    elif args.train_mode =='para':
         spatio_temporal_parallel(args,
                             s_concepts,
                             target_features,
@@ -500,6 +502,8 @@ def train_cbm_and_save(args):
                             t_clip_features,
                             t_val_clip_features,
                             save_name)
+    else:
+        hard_label(args,target_features,val_target_features,save_name)
     # s_W_c,s_concepts = train_cocept_layer(args,
     #                            s_concepts,
     #                            target_features,

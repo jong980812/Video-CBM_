@@ -17,3 +17,12 @@ gif/
 new_results/
 psh/
 images/
+*.pkl
+*.json
+*.csv
+*.mp4
+*.jpg
+*.png
+*.ipynb
+vit-explain-main/
+data/

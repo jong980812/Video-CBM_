@@ -1,3 +1,4 @@
+# from modeling_finetune import MLP
 import os
 import json
 import torch
@@ -86,17 +87,17 @@ class CBM_model_joint(torch.nn.Module):
 class CBM_model_triple(torch.nn.Module):
     def __init__(self, backbone_name, s_W_c,t_W_c,p_W_c, W_g, b_g, proj_mean, proj_std, device="cuda",args=None):
         super().__init__()
-        model, _ = data_utils.get_target_model(backbone_name, device,args)
-        model.eval()
+        self.backbone_model, _ = data_utils.get_target_model(backbone_name, device,args)
+        self.backbone_model.eval()
         #remove final fully connected layer
         if "clip" in backbone_name:
-            self.backbone = model
-        elif "cub" in backbone_name:
-            self.backbone = lambda x: model.features(x)
+            self.backbone = self.backbone_model
+        elif "cub" in backbone_name:                    
+            self.backbone = lambda x: self.backbone_model.features(x)
         elif "vmae" or 'AIM' in backbone_name:
-            self.backbone = lambda x: model.forward_features(x)
+            self.backbone = lambda x: self.backbone_model.forward_features(x)
         else:
-            self.backbone = torch.nn.Sequential(*list(model.children())[:-1])
+            self.backbone = torch.nn.Sequential(*list(self.backbone_model.children())[:-1])
         # stp_W_c = torch.cat([s_W_c,t_W_c,p_W_c],dim=0)
             
         self.s_proj_layer = torch.nn.Linear(in_features=s_W_c.shape[1], out_features=s_W_c.shape[0], bias=False).to(device)
@@ -115,7 +116,7 @@ class CBM_model_triple(torch.nn.Module):
         self.final.load_state_dict({"weight":W_g, "bias":b_g})
         self.concepts = None
     def get_feature(self,x):
-        backbone_feat = self.backbone(x)
+        backbone_feat = self.backbone_model(x,only_feat= True)
         backbone_feat = torch.flatten(backbone_feat, 1)
         s_x = self.s_proj_layer(backbone_feat)
         s_proj_c = (s_x-self.s_proj_mean)/self.s_proj_std
@@ -127,16 +128,15 @@ class CBM_model_triple(torch.nn.Module):
         p_proj_c = (p_x-self.p_proj_mean)/self.p_proj_std
         
         proj_c = torch.cat([s_proj_c,t_proj_c,p_proj_c],dim=1)
-        final = self.final(proj_c)
+
         
-        return backbone_feat,proj_c,final
-    def forward(self, x):
-        x = self.backbone(x)
+        return backbone_feat,proj_c
+    def forward(self, x,masking_sp=False):
+        x = self.backbone_model(x,True)
         x = torch.flatten(x, 1)
         # x = self.proj_layer(x)
         s_x = self.s_proj_layer(x)
         s_proj_c = (s_x-self.s_proj_mean)/self.s_proj_std
-        
         t_x = self.t_proj_layer(x)
         t_proj_c = (t_x-self.t_proj_mean)/self.t_proj_std
         
@@ -301,7 +301,7 @@ def load_cbm_joint(load_dir, device,argument):
 
     model = CBM_model_joint(args['backbone'], s_W_c,t_W_c, W_g, b_g, proj_mean, proj_std, device,argument)
     return model,model
-def load_cbm_triple(load_dir, device,argument):
+def load_cbm_triple(load_dir, device,argument=None):
     with open(os.path.join(load_dir ,"args.txt"), 'r') as f:
         args = json.load(f)
 
@@ -371,3 +371,29 @@ def load_std(load_dir, device):
     model.eval()
     return model
 
+class MLP(nn.Module):
+    def __init__(self, input_dim, num_classes, expand_dim):
+        super(MLP, self).__init__()
+        self.expand_dim = expand_dim
+        if self.expand_dim is not None:
+            self.linear = nn.Linear(input_dim, expand_dim)
+            self.activation = torch.nn.ReLU()
+            self.linear2 = nn.Linear(expand_dim, num_classes) #softmax is automatically handled by loss function
+        else:
+            self.linear = nn.Linear(input_dim, num_classes)
+
+    def forward(self, x):
+        x = self.linear(x)
+        if self.expand_dim is not None:
+            x = self.activation(x)
+            x = self.linear2(x)
+        return x
+def ModelOracleCtoY(n_class_attr, input_dim, num_classes):
+    # X -> C part is separate, this is only the C -> Y part
+    import math
+    expand_dim = int(math.sqrt(input_dim * num_classes))
+    if n_class_attr == 3:
+        model = MLP(input_dim=input_dim * n_class_attr, num_classes=num_classes, expand_dim=expand_dim)
+    else:
+        model = MLP(input_dim=input_dim, num_classes=num_classes, expand_dim=expand_dim)
+    return model

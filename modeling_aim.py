@@ -10,7 +10,55 @@ from torch import nn
 import clip
 from einops import rearrange
 
+from lavila.utils import remap_keys
+class Attention(nn.Module):
+    def __init__(
+            self, dim, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0.,
+            proj_drop=0., attn_head_dim=None):
+        super().__init__()
+        self.num_heads = num_heads
+        head_dim = dim // num_heads
+        if attn_head_dim is not None:
+            head_dim = attn_head_dim
+        all_head_dim = head_dim * self.num_heads
+        self.scale = qk_scale or head_dim ** -0.5
 
+        self.qkv = nn.Linear(dim, all_head_dim * 3, bias=qkv_bias)
+        # if qkv_bias:
+        #     self.q_bias = nn.Parameter(torch.zeros(all_head_dim))
+        #     self.v_bias = nn.Parameter(torch.zeros(all_head_dim))
+        # else:
+        #     self.q_bias = None
+        #     self.v_bias = None
+
+        self.attn_drop = nn.Dropout(attn_drop)
+        self.proj = nn.Linear(all_head_dim, dim)
+        self.proj_drop = nn.Dropout(proj_drop)
+
+    def forward(self, x):
+        x=x.permute(1,0,2)
+        B, N, C = x.shape
+        # qkv_bias = None
+        # if self.q_bias is not None:
+            # qkv_bias = torch.cat((self.q_bias, torch.zeros_like(self.v_bias, requires_grad=False), self.v_bias))
+        # qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        qkv = F.linear(input=x, weight=self.qkv.weight, bias=self.qkv.bias)
+        qkv = qkv.reshape(B, N, 3, self.num_heads, -1).permute(2, 0, 3, 1, 4)
+        q, k, v = qkv[0], qkv[1], qkv[2]   # make torchscript happy (cannot use tensor as tuple)
+
+        q = q * self.scale
+        attn = (q @ k.transpose(-2, -1))
+
+        
+        attn = attn.softmax(dim=-1)
+        attn = self.attn_drop(attn)
+
+        x = (attn @ v).transpose(1, 2).reshape(B, N, -1)
+        x = self.proj(x)
+        x = self.proj_drop(x)
+        x=x.permute(1,0,2)
+
+        return x
 class Adapter(nn.Module):
     def __init__(self, D_features, dim_mlp=192, act_layer=nn.GELU, skip_connect=True):
         super().__init__()
@@ -49,7 +97,10 @@ class ResidualAttentionBlock(nn.Module):
     def __init__(self, d_model: int, n_head: int, attn_mask: torch.Tensor = None, scale=1., num_tadapter=1, num_frames=8, drop_path=0.,dim_mlp=192,adapter=True):
         super().__init__()
         self.num_tadapter = num_tadapter
-        self.attn = nn.MultiheadAttention(d_model, n_head)
+        # self.attn = nn.MultiheadAttention(d_model, n_head)
+        self.attn = Attention(
+            d_model, num_heads=n_head, qkv_bias=True, qk_scale=None,
+            attn_drop=0., proj_drop=0., attn_head_dim=None)
         self.ln_1 = LayerNorm(d_model)
         self.mlp = nn.Sequential(OrderedDict([
             ("c_fc", nn.Linear(d_model, d_model * 4)),
@@ -57,7 +108,7 @@ class ResidualAttentionBlock(nn.Module):
             ("c_proj", nn.Linear(d_model * 4, d_model))
         ]))
         self.ln_2 = LayerNorm(d_model)
-        self.attn_mask = attn_mask
+        # self.attn_mask = attn_mask
         self.n_head = n_head
         self.adapter = adapter
         if self.adapter:
@@ -70,10 +121,11 @@ class ResidualAttentionBlock(nn.Module):
                 self.T_Adapter_in = Adapter(d_model,dim_mlp=dim_mlp)
         self.num_frames = num_frames
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
+        # self.attn_drop = nn.Dropout(0.)
 
-    def attention(self, x: torch.Tensor):
-        self.attn_mask = self.attn_mask.to(dtype=x.dtype, device=x.device) if self.attn_mask is not None else None
-        return self.attn(x, x, x, need_weights=False, attn_mask=self.attn_mask)[0]
+    # def attention(self, x: torch.Tensor):
+    #     self.attn_mask = self.attn_mask.to(dtype=x.dtype, device=x.device) if self.attn_mask is not None else None
+    #     return self.attn(x, x, x, need_weights=True, attn_mask=self.attn_mask)
 
     def forward(self, x: torch.Tensor):
         if self.adapter:
@@ -83,18 +135,18 @@ class ResidualAttentionBlock(nn.Module):
             ## temporal adaptation
             xt = rearrange(x, 'n (b t) d -> t (b n) d', t=self.num_frames)
             if self.num_tadapter == 2:
-                xt = self.T_Adapter(self.attention(self.T_Adapter_in(self.ln_1(xt))))
+                xt = self.T_Adapter(self.attn(self.T_Adapter_in(self.ln_1(xt))))
             else:
-                xt = self.T_Adapter(self.attention(self.ln_1(xt)))
+                xt = self.T_Adapter(self.attn(self.ln_1(xt)))
             xt = rearrange(xt, 't (b n) d -> n (b t) d', n=n)
             x = x + self.drop_path(xt)
             ## spatial adaptation
-            x = x + self.S_Adapter(self.attention(self.ln_1(x)))
+            x = x + self.S_Adapter(self.attn(self.ln_1(x)))
             ## joint adaptation
             xn = self.ln_2(x)
             x = x + self.mlp(xn) + self.drop_path(self.scale * self.MLP_Adapter(xn))
         else:
-            x = x + self.attention(self.ln_1(x))
+            x = x + self.attn(self.ln_1(x))
             x = x + self.mlp(self.ln_2(x))
         return x
 
@@ -218,13 +270,16 @@ class AIM(nn.Module):
             else:
                 clip_model, preprocess = clip.load("ViT-L/14", device="cpu")
             pretrain_dict = clip_model.visual.state_dict()
-            del clip_model
-            del pretrain_dict['proj']
+
+
             msg = self.load_state_dict(pretrain_dict, strict=False)
             print('Missing keys: {}'.format(msg.missing_keys))
             print('Unexpected keys: {}'.format(msg.unexpected_keys))
             print(f"=> loaded successfully '{self.pretrained}'")
             torch.cuda.empty_cache()
+            
+            del clip_model
+            del pretrain_dict['proj']
         elif self.pretrained is None:
             self.apply(_init_weights)
         else:
@@ -307,7 +362,10 @@ class AIM(nn.Module):
         x = x.view(x.shape[0], -1)
         return x
     
-    def forward(self,x):
+    def forward(self, x, only_feat=False):
+        x = self.forward_features(x)
+        if only_feat:
+            return x
         cls_score = self.head(x)
         # [N, num_classes]
         return cls_score

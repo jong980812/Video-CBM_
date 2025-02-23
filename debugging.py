@@ -72,7 +72,7 @@ def debug(args,save_name):
     total_concepts = num_object + num_action + num_scene
     k=3
     print("?***? Start test")
-    accuracy,concept_counts = cbm_utils.get_accuracy_and_concept_distribution_cbm(model, k, val_data_t, device,64,10)
+    accuracy,concept_counts = cbm_utils.get_accuracy_and_concept_distribution_cbm(model, k, val_data_t, device,64,10,save_name)
     counted_object,counted_action,counted_scene = concept_counts
     # 전체 테스트 샘플 개수 (total_samples)를 직접 넣어주세요.
     total_samples = len(val_data_t)

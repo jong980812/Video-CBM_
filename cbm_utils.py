@@ -8,7 +8,9 @@ from collections import OrderedDict
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 import lavila.models as models
+from lavila.models import Timesformer
 from lavila.utils import inflate_positional_embeds
+from lavila.openai_model import QuickGELU
 from transforms import Permute
 import torchvision.transforms as transforms
 import torchvision.transforms._transforms_video as transforms_video
@@ -137,6 +139,19 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
     #! Load backbone 
     if target_name.startswith("clip_"):
         target_model, target_preprocess = clip.load(target_name[5:], device=device)
+    elif target_name =='timesformer':
+        target_model = Timesformer(
+            img_size=224, patch_size=16,
+        embed_dim=768, depth=12, num_heads=12,
+        num_frames=8,
+        time_init='zeros',
+        attention_style='frozen-in-time',
+        ln_pre=False,
+        act_layer=QuickGELU,
+        is_tanh_gating=False,
+        drop_path_rate=0.,)
+        finetune = torch.load(args.finetune, map_location='cpu')['model_state']
+        msg = target_model.load_state_dict(finetune,True)
     else:
         target_model, target_preprocess = data_utils.get_target_model(target_name, device,args)
     target_model.to(device)
@@ -177,8 +192,8 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
             save_lavila_video_features(dual_encoder_model, data_c, clip_save_name, batch_size, device=device,args=args)
     elif 'internvid' in args.dual_encoder:
         s_text = clip.tokenize(["A photo of {}.".format(word) for word in s_words]).to(device)
-        t_text = dual_encoder_model.text_encoder.tokenize(["{}".format(word.replace('something','')) for word in t_words], context_length=32).to(device)
-        p_text = clip.tokenize(["A Person at the {}.".format(word) for word in p_words]).to(device)
+        t_text = dual_encoder_model.text_encoder.tokenize(["{}".format(word) for word in t_words], context_length=32).to(device)
+        p_text = clip.tokenize(["A person {}.".format(word) for word in p_words]).to(device)
         # save_internvid_text_features(dual_encoder_model , s_text, s_text_save_name, batch_size)
         save_clip_text_features(clip_model , s_text, s_text_save_name, batch_size)
         
@@ -297,7 +312,7 @@ def get_accuracy_cbm(model, dataset, device, batch_size=250, num_workers=10):
             correct += torch.sum(pred.cpu()==labels)
             total += len(labels)
     return correct/total
-def get_accuracy_and_concept_distribution_cbm(model,k,dataset, device, batch_size=250, num_workers=10):
+def get_accuracy_and_concept_distribution_cbm(model,k,dataset, device, batch_size=250, num_workers=10,save_name=None):
     correct = 0
     total = 0
     num_object,num_action,num_scene=model.s_proj_layer.weight.shape[0],model.t_proj_layer.weight.shape[0],model.p_proj_layer.weight.shape[0]
@@ -313,6 +328,8 @@ def get_accuracy_and_concept_distribution_cbm(model,k,dataset, device, batch_siz
     total_action_count = 0
     total_scene_count = 0
     model.eval()
+    # with open(os.path.join(save_name,"class_concept_contribution.csv"), "w") as f:
+        # f.write("label,topk_indices\n")
     for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=10,
                                            pin_memory=True)):
         with torch.no_grad():
@@ -340,6 +357,10 @@ def get_accuracy_and_concept_distribution_cbm(model,k,dataset, device, batch_siz
                 total_object_count += object_count
                 total_action_count += action_count
                 total_scene_count += scene_count
+                
+                # with open(os.path.join(save_name,"class_concept_contribution.csv"), "a") as f:
+                    # topk_indices_str = ",".join(map(str, topk_indices[i].cpu().tolist()))
+                    # f.write(f"{labels[i].item()},{topk_indices_str}\n")
     
     return correct/total,[total_object_count,total_action_count,total_scene_count]
 
@@ -562,3 +583,6 @@ def analysis_backbone_dim(model,dataset,args,number_act=5,view_num=50):
 
     print(f"Top {N} least activated dimensions: {bottom_N_indices}")
     print(f"Activation counts for least activated dimensions: {bottom_N_values}")
+    
+    
+

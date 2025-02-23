@@ -279,8 +279,10 @@ class VisionTransformer(nn.Module):
         else:
             return x[:, 0]
 
-    def forward(self, x):
+    def forward(self, x, only_feat=False):
         x = self.forward_features(x)
+        if only_feat:
+            return x
         x = self.head(self.fc_dropout(x))
         return x
 

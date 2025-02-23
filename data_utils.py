@@ -28,6 +28,8 @@ LABEL_FILES = {"places365":"data/categories_places365_clean.txt",
                "kinetics400":"data/kinetics400_classes.txt",
                "kinetics400_scratch":"data/kinetics400_classes.txt",
                "kinetics100":"data/kinetics100_classes.txt",
+               "haa500_subset":"/data/jong980812/project/Video-CBM-two-stream/data/video_annotation/haa500_subset/class_list.txt",
+               "kth":"/data/jong980812/project/Video-CBM-two-stream/data/video_annotation/kth/class_list.txt"
                }
 
 def get_resnet_imagenet_preprocess():
@@ -48,6 +50,16 @@ def get_data(dataset_name, preprocess=None,args = None):
     elif dataset_name == "SSV2_train":
         data, _= build_dataset(is_train=True, test_mode=False, args=args)
     elif dataset_name == "SSV2_val":
+        data, _= build_dataset(is_train=False, test_mode=False, args=args)
+    elif dataset_name == "kth_train":
+        data, _= build_dataset(is_train=True, test_mode=False, args=args)
+    elif dataset_name == "kth_val":
+        data, _= build_dataset(is_train=False, test_mode=False, args=args)
+    elif dataset_name == "haa500_subset_train":
+        data, _= build_dataset(is_train=True, test_mode=False, args=args)
+    elif dataset_name == "haa500_subset_val":
+        data, _= build_dataset(is_train=False, test_mode=False, args=args)
+    elif dataset_name == "haa500_subset_test":
         data, _= build_dataset(is_train=False, test_mode=False, args=args)
     elif dataset_name == "mini-SSV2_train":
         data, _= build_dataset(is_train=True, test_mode=False, args=args)
@@ -144,7 +156,7 @@ def get_target_model(target_name, device,args=None):
                 adapter_layers=[0,1,2,3,4,5,6,7,8,9,10,11],
                 args=args
             )
-        checkpoint = torch.load(args.finetune,'cpu')
+        checkpoint = torch.load('/data/datasets/video_checkpoint/kinetics400/AIM_finetune.pth','cpu')
         # checkpoint = checkpoint['module']
         if args.data_set=='kinetics400':
             all_keys = list(checkpoint.keys())
@@ -157,7 +169,12 @@ def get_target_model(target_name, device,args=None):
                 else:
                     new_dict[key] = checkpoint[key]
             preprocess=None
-            print(target_model.load_state_dict(new_dict))
+            from lavila.utils import AIM_remap_keys
+            remapped_state_dict = AIM_remap_keys(new_dict, transformer_layers=12)
+            msg = target_model.load_state_dict(remapped_state_dict, strict=True)
+            print('Missing keys: {}'.format(msg.missing_keys))
+            print('Unexpected keys: {}'.format(msg.unexpected_keys))
+            # print(target_model.load_state_dict(new_dict))
             print('AIM succesfully is loaded')
         else:
             preprocess=None
