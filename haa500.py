@@ -44,7 +44,7 @@ class HAA500VideoClsDataset(Dataset):
         cleaned = pd.read_csv(self.anno_path, header=None, delimiter=',')
         self.dataset_samples = list(cleaned.values[:, 0])
         self.label_array = list(cleaned.values[:, 1])
-
+        self.a = None
         if (mode == 'train'):
             pass
 
