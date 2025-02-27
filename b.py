@@ -1,5 +1,5 @@
 # # txt 파일 읽기
-# with open("/data/jong980812/project/Video-CBM-two-stream/SUN_places.txt", "r") as file:
+# with open("/data/jongseo/project/Video-CBM-two-stream/SUN_places.txt", "r") as file:
 #     lines = file.readlines()
 
 
@@ -34,7 +34,7 @@
 #         file.write(f"{line}\n")
 
 # 파일 경로 지정
-file_path = "/data/jong980812/project/Video-CBM-two-stream/data/concept_sets/llava_ver2/k400_obejct.txt"  # 파일 경로를 실제 파일 경로로 변경하세요.
+file_path = "/data/jongseo/project/Video-CBM-two-stream/data/concept_sets/llava_ver2/k400_obejct.txt"  # 파일 경로를 실제 파일 경로로 변경하세요.
 
 # 파일 열어서 중복 제거 후 저장
 with open(file_path, "r") as f:

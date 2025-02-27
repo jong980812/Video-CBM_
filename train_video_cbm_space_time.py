@@ -242,13 +242,13 @@ def train_cbm_and_save(args):
                                             args.feature_layer,d_train, args.concept_set, "avg", args.activation_dir)
     val_target_save_name, val_clip_save_name, text_save_name =  cbm_utils.get_save_names(args.clip_name, args.backbone,
                                             args.feature_layer, d_val, args.concept_set, "avg", args.activation_dir)
-    s_text = '/data/jong980812/project/Video-CBM/results/origin_ssv2/finetune_internvid_ost_spatio/activation/ssv2_ost_spatio_concepts_ViT-B16.pt'
-    t_text= '/data/jong980812/project/Video-CBM/results/origin_ssv2/finetune_internvid_ost_temporal/activation/ssv2_ost_temporal_concepts_ViT-B16.pt'
+    s_text = '/data/jongseo/project/Video-CBM/results/origin_ssv2/finetune_internvid_ost_spatio/activation/ssv2_ost_spatio_concepts_ViT-B16.pt'
+    t_text= '/data/jongseo/project/Video-CBM/results/origin_ssv2/finetune_internvid_ost_temporal/activation/ssv2_ost_temporal_concepts_ViT-B16.pt'
     if dist.get_rank()==0:
         proj_layers={}
         for j,text_save_name in enumerate([s_text,t_text]):
         #load features
-            concept_set_path = '/data/jong980812/project/Video-CBM/data/concept_sets/ssv2_ost_spatio_concepts.txt' if j==0 else '/data/jong980812/project/Video-CBM/data/concept_sets/ssv2_ost_temporal_concepts.txt'
+            concept_set_path = '/data/jongseo/project/Video-CBM/data/concept_sets/ssv2_ost_spatio_concepts.txt' if j==0 else '/data/jongseo/project/Video-CBM/data/concept_sets/ssv2_ost_temporal_concepts.txt'
             with open(concept_set_path) as f:
                 concepts = f.read().split("\n")
             print(f'****{j} th proj layer****')

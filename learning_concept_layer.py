@@ -619,7 +619,15 @@ def spatio_temporal_attention(args,
 
 
 def hard_label(args,target_features, val_target_features,save_name):
-    similarity_fn = similarity.cos_similarity_cubed_single_sample
+    if args.loss_mode =='concept':
+        similarity_fn = similarity.cos_similarity_cubed_single_concept
+    elif args.loss_mode =='sample':
+        similarity_fn = similarity.cos_similarity_cubed_single_sample
+    elif args.loss_mode =='second':
+        similarity_fn = similarity.cos_similarity_cubed_single_secondpower
+    else:
+        exit()
+    # similarity_fn = similarity.cos_similarity_cubed_single_sample
     if args.hard_label is not None:
         # pkl 파일 경로
         file_path = args.hard_label
@@ -683,7 +691,7 @@ def hard_label(args,target_features, val_target_features,save_name):
         loss = torch.mean(loss)
         loss.backward()
         opt.step()
-        if i%20==0 or i==args.proj_steps-1:
+        if i%10==0 or i==args.proj_steps-1:
             with torch.no_grad():
                 val_output = proj_layer(val_target_features.to(args.device).detach())
                 if args.use_mlp:
@@ -719,7 +727,7 @@ def hard_label(args,target_features, val_target_features,save_name):
                 else:
                     best_weights = proj_layer.weight.clone()
             else: #stop if val loss starts increasing
-                # break'
+                # break
                 # print(loss)
                 pass
             print("Step:{}, Avg train similarity:{:.4f}, Avg val similarity:{:.4f}".format(i, -loss.cpu(),
@@ -742,7 +750,8 @@ def hard_label(args,target_features, val_target_features,save_name):
                                concepts = train_result_tensor[0],
                                target_features=target_features,
                                val_target_features=val_target_features,
-                                save_name=save_name
+                                save_name=save_name,
+                                best_val_loss=best_val_loss
                                )
 
 
@@ -1117,7 +1126,7 @@ def train_classification_multiview(args,W_c,pre_concepts,concepts, target_featur
         total = W_g.numel()
         out_dict['sparsity'] = {"Non-zero weights":nnz, "Total weights":total, "Percentage non-zero":nnz/total}
         json.dump(out_dict, f, indent=2)
-def train_classification_layer(args=None,W_c=None,pre_concepts=None,concepts=None, target_features=None,val_target_features=None,save_name=None,joint=None):
+def train_classification_layer(args=None,W_c=None,pre_concepts=None,concepts=None, target_features=None,val_target_features=None,save_name=None,joint=None,best_val_loss=None):
     cls_file = data_utils.LABEL_FILES[args.data_set]
     d_train = args.data_set + "_train"
     d_val = args.data_set + "_val"
@@ -1170,7 +1179,7 @@ def train_classification_layer(args=None,W_c=None,pre_concepts=None,concepts=Non
     # Solve the GLM path
     #concept layer to classification
     output_proj = glm_saga(linear, indexed_train_loader, STEP_SIZE, args.n_iters, ALPHA, epsilon=1, k=1,
-                    val_loader=val_loader, do_zero=False, metadata=metadata, n_ex=len(target_features), n_classes = len(classes),verbose=10)
+                    val_loader=val_loader, do_zero=False, metadata=metadata, n_ex=len(target_features), n_classes = len(classes),verbose=100)
     W_g = output_proj['path'][0]['weight']
     b_g = output_proj['path'][0]['bias']
     
@@ -1187,6 +1196,7 @@ def train_classification_layer(args=None,W_c=None,pre_concepts=None,concepts=Non
         nnz = (W_g.abs() > 1e-5).sum().item()
         total = W_g.numel()
         out_dict['sparsity'] = {"Non-zero weights":nnz, "Total weights":total, "Percentage non-zero":nnz/total}
+        out_dict['concept_layer_best_loss'] = -(best_val_loss.item())
         json.dump(out_dict, f, indent=2)
 
 

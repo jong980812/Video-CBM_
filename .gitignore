@@ -26,3 +26,4 @@ images/
 *.ipynb
 vit-explain-main/
 data/
+*.pt

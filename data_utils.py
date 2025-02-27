@@ -28,8 +28,8 @@ LABEL_FILES = {"places365":"data/categories_places365_clean.txt",
                "kinetics400":"data/kinetics400_classes.txt",
                "kinetics400_scratch":"data/kinetics400_classes.txt",
                "kinetics100":"data/kinetics100_classes.txt",
-               "haa500_subset":"/data/jong980812/project/Video-CBM-two-stream/data/video_annotation/haa500_subset/class_list.txt",
-               "kth":"/data/jong980812/project/Video-CBM-two-stream/data/video_annotation/kth/class_list.txt"
+               "haa500_subset":"/data/jongseo/project/Video-CBM-two-stream/data/video_annotation/haa500_subset/class_list.txt",
+               "kth":"/data/jongseo/project/Video-CBM-two-stream/data/video_annotation/kth/class_list.txt"
                }
 
 def get_resnet_imagenet_preprocess():
@@ -156,7 +156,7 @@ def get_target_model(target_name, device,args=None):
                 adapter_layers=[0,1,2,3,4,5,6,7,8,9,10,11],
                 args=args
             )
-        checkpoint = torch.load('/data/datasets/video_checkpoint/kinetics400/AIM_finetune.pth','cpu')
+        checkpoint = torch.load('/data/dataset/video_checkpoint/kinetics400/AIM_finetune.pth','cpu')
         # checkpoint = checkpoint['module']
         if args.data_set=='kinetics400':
             all_keys = list(checkpoint.keys())

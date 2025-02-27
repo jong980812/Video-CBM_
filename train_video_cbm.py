@@ -255,7 +255,7 @@ def train_cbm_and_save(args):
     val_target_save_name, val_clip_save_name, text_save_name =  cbm_utils.get_save_names(args.dual_encoder, args.backbone,
                                             args.feature_layer, d_val, args.concept_set, "avg", args.activation_dir)
     
-    feature_storage = '/data/datasets/videocbm/features'
+    feature_storage = '/data/dataset/videocbm/features'
     if args.saved_features:
         target_save_name = os.path.join(feature_storage,args.data_set,args.backbone,target_save_name.split('/')[-1])
         val_target_save_name = os.path.join(feature_storage,args.data_set,args.backbone,val_target_save_name.split('/')[-1])

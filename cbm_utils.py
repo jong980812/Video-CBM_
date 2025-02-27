@@ -486,11 +486,11 @@ def get_intervid(args,device):
     },
     'viclip-b-internvid-10m-flt': {
         'size': 'b',
-        'pretrained': '/data/datasets/video_checkpoint/ViCLIP-B_InternVid-FLT-10M.pth',
+        'pretrained': '/data/dataset/video_checkpoint/ViCLIP-B_InternVid-FLT-10M.pth',
     },
     'viclip-b-internvid-200m': {
         'size': 'b',
-        'pretrained': '/data/datasets/video_checkpoint/ViCLIP-B_InternVid-200M.pth',
+        'pretrained': '/data/dataset/video_checkpoint/ViCLIP-B_InternVid-200M.pth',
     },
     }
     cfg = model_cfgs['viclip-b-internvid-200m'] if '200m' in args.dual_encoder else model_cfgs['viclip-b-internvid-10m-flt']

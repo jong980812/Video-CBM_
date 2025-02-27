@@ -220,6 +220,7 @@ parser.add_argument('--hard_label',type=str,default=None)
 parser.add_argument('--sp_clip',action='store_true')
 parser.add_argument('--use_mlp',action='store_true')
 parser.add_argument('--debug',default=None)
+parser.add_argument('--loss_mode',default='concept',choices=['concept','sample','second'])
 
 
 def train_cbm_and_save(args):
@@ -239,7 +240,7 @@ def train_cbm_and_save(args):
     torch.backends.cudnn.benchmark = False
     if not os.path.exists(args.save_dir):
         os.mkdir(args.save_dir)
-    args.video_anno_path=os.path.join(os.getcwd(),'data/video_annotation',args.data_set)
+    # args.video_anno_path=os.path.join(os.getcwd(),'data/video_annotation',args.data_set)
     # similarity_fn = similarity.cos_similarity_cubed_single
     device = torch.device(args.device)
     
@@ -277,15 +278,15 @@ def train_cbm_and_save(args):
     val_target_save_name, val_clip_save_name, s_text_save_name, t_text_save_name,_ =  cbm_utils.get_save_names(args.dual_encoder, args.backbone,
                                             args.feature_layer, d_val, (args.s_concept_set, args.t_concept_set,args.p_concept_set), "avg", args.activation_dir)
     
-    feature_storage = '/data/datasets/videocbm/features'
+    feature_storage = '/data/dataset/videocbm/features'
     if args.saved_features:
         target_save_name = os.path.join(feature_storage,args.data_set,args.backbone,target_save_name.split('/')[-1])
         val_target_save_name = os.path.join(feature_storage,args.data_set,args.backbone,val_target_save_name.split('/')[-1])
         clip_save_name = os.path.join(feature_storage,args.data_set,args.dual_encoder,clip_save_name.split('/')[-1])
         val_clip_save_name = os.path.join(feature_storage,args.data_set,args.dual_encoder,val_clip_save_name.split('/')[-1])
         if args.sp_clip:
-            sp_clip_save_name = '/data/jong980812/project/Video-CBM-two-stream/new_results/clip_features/activation/kinetics400_train_clip.pt'
-            sp_val_clip_save_name = '/data/jong980812/project/Video-CBM-two-stream/new_results/clip_features/activation/kinetics400_val_clip.pt'
+            sp_clip_save_name = '/data/jongseo/project/Video-CBM-two-stream/new_results/clip_features/activation/kinetics400_train_clip.pt'
+            sp_val_clip_save_name = '/data/jongseo/project/Video-CBM-two-stream/new_results/clip_features/activation/kinetics400_val_clip.pt'
     if args.multiview:
         target_save_name = os.path.join(feature_storage,args.data_set,args.backbone,target_save_name.split('/')[-1]).replace('.pt','_view4_concat.pt')
         # val_target_save_name = os.path.join(feature_storage,args.data_set,args.backbone,val_target_save_name.split('/')[-1]).replace('.pt','_view4_concat.pt')
@@ -431,7 +432,7 @@ def train_cbm_and_save(args):
     p_val_clip_features = p_val_clip_features[:, p_highest>args.clip_cutoff]
     #! Learning Concept Layer
     #learn projection layer
-    save_name = "{}/{}_cbm_{}".format(args.save_dir, args.data_set, datetime.datetime.now().strftime("%Y_%m_%d_%H_%M"))
+    save_name = "{}/{}_cbm_{}".format(args.save_dir, args.data_set, datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
     os.mkdir(save_name)
     # save_spatial = os.path.join(save_name,'spatial')
     # save_temporal = os.path.join(save_name,'temporal')
